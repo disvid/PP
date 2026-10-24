@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, session } from './api'
+import { ThemeToggle } from './theme'
 
 interface Props {
   onLogin: (name: string) => void
@@ -53,6 +54,7 @@ export default function Login({ onLogin }: Props) {
   const signup = mode === 'signup'
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-8 px-5 py-10" data-testid="login">
+      <ThemeToggle className="absolute right-4 top-4" />
       <div>
         <h1 className="inline-block -rotate-2 border-[5px] border-ink bg-neon px-4 py-1 text-5xl font-extrabold uppercase leading-none tracking-tight shadow-[8px_8px_0_#e4007c]">
           Proof Puzzle

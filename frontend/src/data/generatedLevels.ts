@@ -15,7 +15,7 @@ export interface GeneratedLevel {
 export const GENERATED_LEVELS = [
   {
     "id": 24,
-    "title": "Shuffle 1",
+    "title": "Vivid Underpass",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -33,7 +33,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 25,
-    "title": "Shuffle 2",
+    "title": "Static Quasar",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -51,7 +51,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 26,
-    "title": "Shuffle 3",
+    "title": "Kinetic Pivot",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -69,7 +69,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 27,
-    "title": "Shuffle 4",
+    "title": "Fractal Relay",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -87,7 +87,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 28,
-    "title": "Shuffle 5",
+    "title": "Electric Tapestry",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -105,7 +105,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 29,
-    "title": "Shuffle 6",
+    "title": "Turbo Delta",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -123,7 +123,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 30,
-    "title": "Shuffle 7",
+    "title": "Prism Vortex",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -141,7 +141,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 31,
-    "title": "Shuffle 8",
+    "title": "Midnight Ledger",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -159,7 +159,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 32,
-    "title": "Shuffle 9",
+    "title": "Ultra Signal",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -177,7 +177,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 33,
-    "title": "Shuffle 10",
+    "title": "Opal Mirage",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -195,7 +195,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 34,
-    "title": "Shuffle 11",
+    "title": "Arctic Vector",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -213,7 +213,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 35,
-    "title": "Shuffle 12",
+    "title": "Lucid Orbit",
     "description": "A freshly scrambled 3x3 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 3,
     "initial": [
@@ -231,7 +231,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 36,
-    "title": "Scramble 1",
+    "title": "Savage Cascade",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -251,7 +251,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 37,
-    "title": "Scramble 2",
+    "title": "Cipher Cortex",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -271,7 +271,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 38,
-    "title": "Scramble 3",
+    "title": "Cyber Engine",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -291,7 +291,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 39,
-    "title": "Scramble 4",
+    "title": "Tidal Horizon",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -311,7 +311,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 40,
-    "title": "Scramble 5",
+    "title": "Hollow Paradox",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -331,7 +331,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 41,
-    "title": "Scramble 6",
+    "title": "Cosmic Nexus",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -351,7 +351,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 42,
-    "title": "Scramble 7",
+    "title": "Xenon Fusion",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -371,7 +371,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 43,
-    "title": "Scramble 8",
+    "title": "Lunar Gateway",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -391,7 +391,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 44,
-    "title": "Scramble 9",
+    "title": "Digital Rift",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -411,7 +411,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 45,
-    "title": "Scramble 10",
+    "title": "Crimson Lattice",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -431,7 +431,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 46,
-    "title": "Scramble 11",
+    "title": "Glitch Maze",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -451,7 +451,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 47,
-    "title": "Scramble 12",
+    "title": "Binary Shift",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -471,7 +471,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 48,
-    "title": "Scramble 13",
+    "title": "Nova Reactor",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -491,7 +491,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 49,
-    "title": "Scramble 14",
+    "title": "Mythic Grid",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -511,7 +511,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 50,
-    "title": "Scramble 15",
+    "title": "Amber Zenith",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -531,7 +531,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 51,
-    "title": "Scramble 16",
+    "title": "Echo Theorem",
     "description": "A freshly scrambled 4x4 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 4,
     "initial": [
@@ -551,7 +551,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 52,
-    "title": "Chaos 1",
+    "title": "Gilded Mosaic",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -573,7 +573,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 53,
-    "title": "Chaos 2",
+    "title": "Atomic Oracle",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -595,7 +595,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 54,
-    "title": "Chaos 3",
+    "title": "Jade Jigsaw",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -617,7 +617,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 55,
-    "title": "Chaos 4",
+    "title": "Wild Bastion",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -639,7 +639,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 56,
-    "title": "Chaos 5",
+    "title": "Sonic Gambit",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -661,7 +661,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 57,
-    "title": "Chaos 6",
+    "title": "Obsidian Kernel",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -683,7 +683,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 58,
-    "title": "Chaos 7",
+    "title": "Phantom Matrix",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -705,7 +705,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 59,
-    "title": "Chaos 8",
+    "title": "Quantum Warp",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -727,7 +727,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 60,
-    "title": "Chaos 9",
+    "title": "Gamma Pulse",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -749,7 +749,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 61,
-    "title": "Chaos 10",
+    "title": "Solar Monolith",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -771,7 +771,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 62,
-    "title": "Chaos 11",
+    "title": "Zesty Nebula",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -793,7 +793,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 63,
-    "title": "Chaos 12",
+    "title": "Feral Tangle",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -815,7 +815,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 64,
-    "title": "Chaos 13",
+    "title": "Velvet Tempest",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -837,7 +837,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 65,
-    "title": "Chaos 14",
+    "title": "Cobalt Prototype",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -859,7 +859,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 66,
-    "title": "Chaos 15",
+    "title": "Neon Anthem",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [
@@ -881,7 +881,7 @@ export const GENERATED_LEVELS = [
   },
   {
     "id": 67,
-    "title": "Chaos 16",
+    "title": "Rogue Circuit",
     "description": "A freshly scrambled 5x5 board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.",
     "size": 5,
     "initial": [

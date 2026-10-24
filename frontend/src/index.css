@@ -1,19 +1,51 @@
 @import "tailwindcss";
 
-/* Neo-brutalist "math hacker" system: graph paper, stark ink, thick borders, hard offset shadows, neon accents. */
+/* `dark:` utilities follow the .dark class that ThemeProvider puts on <html> (not the OS setting) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Neo-brutalist "math hacker" system: graph paper, stark ink, thick borders, hard offset shadows, neon accents.
+ *
+ * Two palettes share one set of names. `ink` is the foreground (text, borders), `paper` the page, `card` the panels,
+ * and `shade` the hard drop shadow. The .dark block below swaps their values, so almost every rule (and every
+ * bg-ink / text-ink / border-ink / bg-card utility) flips without being touched. `abyss` and `bone` are the fixed
+ * dark-surface/light-text pair for things that must stay dark in both themes (code editor, labels, header), and
+ * neon, magenta and aqua are the same in both.
+ */
 @theme {
   --font-sans: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Fira Code Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --color-ink: #0a0a0a;
   --color-paper: #f1ecdd;
   --color-card: #fffcf2;
+  --color-abyss: #0a0a0a;
+  --color-bone: #f1ecdd;
   --color-neon: #ffe600;
   --color-magenta: #e4007c;
   --color-aqua: #00e5ff;
 }
 
-html {
+:root {
   color-scheme: light;
+  --shade: #0a0a0a;
+  --grid-strong: rgb(10 10 10 / 0.16);
+  --grid-fine: rgb(10 10 10 / 0.06);
+  --hatch: rgb(10 10 10 / 0.1);
+  --placeholder: rgb(10 10 10 / 0.45);
+}
+
+/* Dark mode: deep charcoal, barely-there grid lines, light borders, neon-cyan hard shadows */
+.dark {
+  color-scheme: dark;
+  --color-ink: #f4f4ef;
+  --color-paper: #0c0c0f;
+  --color-card: #16161b;
+  --color-abyss: #050507;
+  --shade: #00e5ff;
+  --grid-strong: rgb(255 255 255 / 0.05);
+  --grid-fine: rgb(255 255 255 / 0.025);
+  --hatch: rgb(255 255 255 / 0.07);
+  --placeholder: rgb(244 244 239 / 0.4);
 }
 
 body {
@@ -24,17 +56,17 @@ body {
   background-color: var(--color-paper);
   /* graph paper: fine grid plus a heavier line every 5 cells */
   background-image:
-    linear-gradient(rgb(10 10 10 / 0.16) 2px, transparent 2px),
-    linear-gradient(90deg, rgb(10 10 10 / 0.16) 2px, transparent 2px),
-    linear-gradient(rgb(10 10 10 / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(10 10 10 / 0.06) 1px, transparent 1px);
+    linear-gradient(var(--grid-strong) 2px, transparent 2px),
+    linear-gradient(90deg, var(--grid-strong) 2px, transparent 2px),
+    linear-gradient(var(--grid-fine) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px);
   background-size: 130px 130px, 130px 130px, 26px 26px, 26px 26px;
   background-attachment: fixed;
 }
 
 ::selection {
   background: var(--color-neon);
-  color: var(--color-ink);
+  color: #0a0a0a;
 }
 
 code,
@@ -47,23 +79,23 @@ pre {
   background: var(--color-card);
   color: var(--color-ink);
   border: 3px solid var(--color-ink);
-  box-shadow: 6px 6px 0 var(--color-ink);
+  box-shadow: 6px 6px 0 var(--shade);
 }
 .panel-heavy {
   background: var(--color-card);
   color: var(--color-ink);
   border: 5px solid var(--color-ink);
-  box-shadow: 10px 10px 0 var(--color-ink);
+  box-shadow: 10px 10px 0 var(--shade);
 }
 .panel-light {
   background: var(--color-card);
   color: var(--color-ink);
   border: 2px solid var(--color-ink);
-  box-shadow: 4px 4px 0 var(--color-ink);
+  box-shadow: 4px 4px 0 var(--shade);
 }
 .panel-ink {
-  background: var(--color-ink);
-  color: var(--color-paper);
+  background: var(--color-abyss);
+  color: var(--color-bone);
   border: 5px solid var(--color-ink);
   box-shadow: 8px 8px 0 var(--color-magenta);
 }
@@ -74,7 +106,7 @@ pre {
   box-shadow: 8px 8px 0 var(--color-magenta), 8px 8px 0 3px var(--color-ink);
 }
 .hatch {
-  background-image: repeating-linear-gradient(45deg, rgb(10 10 10 / 0.1) 0 10px, transparent 10px 20px);
+  background-image: repeating-linear-gradient(45deg, var(--hatch) 0 10px, transparent 10px 20px);
 }
 
 /* ---- mechanical-key buttons ---- */
@@ -86,7 +118,7 @@ button,
   color: var(--color-ink);
   background: var(--color-card);
   border: 3px solid var(--color-ink);
-  box-shadow: 4px 4px 0 var(--color-ink);
+  box-shadow: 4px 4px 0 var(--shade);
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -97,25 +129,27 @@ button,
 button:not(:disabled):hover,
 .btn:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 var(--color-ink);
+  box-shadow: 5px 5px 0 var(--shade);
 }
 /* pressed: the shadow disappears and the key sinks 4px down and right, into the page */
 button:not(:disabled):active,
 .btn:active {
   transform: translate(4px, 4px);
-  box-shadow: 0 0 0 var(--color-ink);
+  box-shadow: 0 0 0 var(--shade);
 }
 button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-  box-shadow: 2px 2px 0 var(--color-ink);
-  background-image: repeating-linear-gradient(45deg, rgb(10 10 10 / 0.12) 0 6px, transparent 6px 12px);
+  box-shadow: 2px 2px 0 var(--shade);
+  background-image: repeating-linear-gradient(45deg, var(--hatch) 0 6px, transparent 6px 12px);
 }
 .btn-neon {
   background-color: var(--color-neon);
+  color: #0a0a0a;
 }
 .btn-aqua {
   background-color: var(--color-aqua);
+  color: #0a0a0a;
 }
 .btn-magenta {
   background-color: var(--color-magenta);
@@ -125,7 +159,7 @@ button:disabled {
   background-color: var(--color-card);
 }
 .btn-ink {
-  background-color: var(--color-ink);
+  background-color: var(--color-abyss);
   color: var(--color-neon);
 }
 /* links that should look like text, and tiny controls that should not be keys */
@@ -153,7 +187,7 @@ button.btn-bare:not(:disabled):active {
   height: 14px;
   padding: 0;
   border-width: 2px;
-  box-shadow: 2px 2px 0 var(--color-ink);
+  box-shadow: 2px 2px 0 var(--shade);
 }
 .dot-on {
   background: var(--color-magenta);
@@ -167,7 +201,7 @@ textarea {
   color: var(--color-ink);
   background: var(--color-card);
   border: 3px solid var(--color-ink);
-  box-shadow: 3px 3px 0 var(--color-ink);
+  box-shadow: 3px 3px 0 var(--shade);
   transition:
     transform 0.08s,
     box-shadow 0.08s;
@@ -175,7 +209,7 @@ textarea {
 input:not([type="range"]):not([type="checkbox"]):hover,
 select:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 var(--color-ink);
+  box-shadow: 4px 4px 0 var(--shade);
 }
 input:not([type="range"]):not([type="checkbox"]):focus,
 select:focus,
@@ -184,7 +218,7 @@ textarea:focus {
   outline-offset: 2px;
 }
 input::placeholder {
-  color: rgb(10 10 10 / 0.45);
+  color: var(--placeholder);
 }
 input[type="checkbox"] {
   accent-color: var(--color-magenta);
@@ -201,7 +235,7 @@ input[type="range"] {
   height: 16px;
   background: var(--color-card);
   border: 3px solid var(--color-ink);
-  box-shadow: 3px 3px 0 var(--color-ink);
+  box-shadow: 3px 3px 0 var(--shade);
   cursor: pointer;
 }
 input[type="range"]:disabled {
@@ -214,7 +248,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 26px;
   background: var(--color-neon);
   border: 3px solid var(--color-ink);
-  box-shadow: 3px 3px 0 var(--color-ink);
+  box-shadow: 3px 3px 0 var(--shade);
 }
 input[type="range"]::-moz-range-thumb {
   width: 18px;
@@ -222,12 +256,12 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 0;
   background: var(--color-neon);
   border: 3px solid var(--color-ink);
-  box-shadow: 3px 3px 0 var(--color-ink);
+  box-shadow: 3px 3px 0 var(--shade);
 }
 
 /* ---- tables ---- */
 .board-table th {
-  background: var(--color-ink);
+  background: var(--color-abyss);
   color: var(--color-neon);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -250,7 +284,8 @@ input[type="range"]::-moz-range-thumb {
 .lift-row:hover {
   transform: translate(-3px, -3px);
   background-color: var(--color-neon);
-  box-shadow: 4px 4px 0 var(--color-ink);
+  color: #0a0a0a;
+  box-shadow: 4px 4px 0 var(--shade);
 }
 
 /* ---- board tiles: thick physical blocks with bevelled edges ---- */
@@ -259,7 +294,7 @@ input[type="range"]::-moz-range-thumb {
   box-shadow:
     inset -6px -6px 0 rgb(0 0 0 / 0.26),
     inset 5px 5px 0 rgb(255 255 255 / 0.38),
-    0 0 0 0 var(--color-ink);
+    0 0 0 0 var(--shade);
   transition:
     transform 0.12s ease-out,
     box-shadow 0.12s ease-out;
@@ -281,7 +316,80 @@ input[type="range"]::-moz-range-thumb {
   box-shadow:
     inset -6px -6px 0 rgb(0 0 0 / 0.26),
     inset 5px 5px 0 rgb(255 255 255 / 0.38),
-    0 5px 0 0 var(--color-ink);
+    0 5px 0 0 var(--shade);
+}
+/* swap: a tile that is sliding to its new cell rises above its neighbours and grows a little */
+.tile-lifted,
+.tile-lifted:hover {
+  transform: scale(1.1);
+  box-shadow:
+    inset -6px -6px 0 rgb(0 0 0 / 0.26),
+    inset 5px 5px 0 rgb(255 255 255 / 0.38),
+    0 7px 0 0 var(--shade);
+}
+
+/*
+ * rotate: the whole tile spins a quarter turn (or half, or back) into its new orientation. A square looks the same
+ * after any quarter turn, so the spin starts at the old angle and ends at 0, which is where the arrow now points.
+ */
+@keyframes tile-spin-1 {
+  from {
+    transform: rotate(-90deg);
+  }
+  to {
+    transform: rotate(0);
+  }
+}
+@keyframes tile-spin-2 {
+  from {
+    transform: rotate(-180deg);
+  }
+  to {
+    transform: rotate(0);
+  }
+}
+@keyframes tile-spin-3 {
+  from {
+    transform: rotate(90deg);
+  }
+  to {
+    transform: rotate(0);
+  }
+}
+.tile-spin-1 {
+  animation: tile-spin-1 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.tile-spin-2 {
+  animation: tile-spin-2 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.tile-spin-3 {
+  animation: tile-spin-3 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+/* paint: a white splash blooms over the tile and fades, on top of the scale pulse */
+@keyframes paint-splash {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+.paint-splash {
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.95) 0%, rgb(255 255 255 / 0) 68%);
+  animation: paint-splash 0.45s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-spin-1,
+  .tile-spin-2,
+  .tile-spin-3,
+  .paint-splash {
+    animation: none;
+  }
 }
 
 /* ---- error feedback ---- */
@@ -333,14 +441,36 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
-/* ---- Monaco line decorations ---- */
+/* ---- Monaco line decorations (the editor is dark in both themes) ---- */
+/* the line being executed: it flashes bright when it becomes current, settles to a glow, and gets a gutter arrow */
+@keyframes line-flash {
+  0% {
+    background: rgb(255 230 0 / 0.75);
+  }
+  100% {
+    background: rgb(255 230 0 / 0.18);
+  }
+}
 .ln-active {
   background: rgb(255 230 0 / 0.18);
   border-left: 4px solid var(--color-neon);
+  animation: line-flash 0.7s ease-out;
+}
+.ln-active-gutter::before {
+  content: "▶";
+  color: var(--color-neon);
+  font-size: 10px;
+  line-height: 22px;
+  margin-left: 2px;
 }
 .ln-err {
   background: rgb(228 0 124 / 0.3);
   border-left: 4px solid var(--color-magenta);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ln-active {
+    animation: none;
+  }
 }
 
 /* hint flash: an outline, because box-shadow already carries the tile's bevel */
@@ -349,11 +479,19 @@ input[type="range"]::-moz-range-thumb {
   outline-offset: 3px;
 }
 
-/* colored panel fills (declared after .panel so they win) */
+/* colored fills keep their own text color in both themes (declared last so they win over .panel / .btn) */
 .panel-neon {
   background: var(--color-neon);
 }
 .panel-magenta {
   background: var(--color-magenta);
+}
+.bg-neon,
+.bg-aqua,
+.panel-neon {
+  color: #0a0a0a;
+}
+.bg-magenta,
+.panel-magenta {
   color: #fff;
 }

@@ -378,7 +378,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
   const shown = ghost ? ghost.before : boards[Math.min(viewIdx, boards.length - 1)]
   const atEnd = viewIdx === boards.length - 1
   const activeLine = viewIdx > 0 ? (stepLines[viewIdx - 1] ?? null) : null
-  const statusColor = { info: 'text-ink', ok: 'text-emerald-700', bad: 'text-magenta' }[status.kind]
+  const statusColor = { info: 'text-ink', ok: 'text-emerald-700 dark:text-emerald-400', bad: 'text-magenta' }[status.kind]
   const isLast = levelIdx === levels.length - 1
   const idGrids = useMemo(() => buildIds(level.initialState, stepOps), [level, stepOps])
   const shownIds = ghost ? undefined : idGrids[Math.min(viewIdx, idGrids.length - 1)]
@@ -413,7 +413,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
       <p className="mb-5 max-w-3xl border-l-8 border-magenta pl-4 text-base font-medium leading-snug">{level.description}</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-3" data-testid="hud">
-        <span className="border-4 border-ink bg-ink px-3 py-1 font-mono text-xl font-medium text-neon shadow-[4px_4px_0_#e4007c]" data-testid="timer">⏱ {fmt(elapsed)}</span>
+        <span className="border-4 border-ink bg-abyss px-3 py-1 font-mono text-xl font-medium text-neon shadow-[4px_4px_0_#e4007c]" data-testid="timer">⏱ {fmt(elapsed)}</span>
         <span className="border-[3px] border-ink bg-card px-2 py-1 font-mono text-xs font-bold" data-testid="lines">lines {lines}/{level.parLimit}</span>
         {hints > 0 && <span className="border-[3px] border-ink bg-magenta px-2 py-1 font-mono text-xs font-bold text-white" data-testid="hints">hints used: {hints}</span>}
       </div>
@@ -470,7 +470,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
 
         <section className="panel shadow-aqua relative flex flex-col items-center gap-5 p-5 md:mt-10 md:rotate-[0.6deg]" data-testid="board-area">
           <div className="text-center">
-            <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">
+            <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">
               Current{boards.length > 1 ? ` · step ${viewIdx}/${boards.length - 1}` : ''}
               {ghost ? ' · ghost preview' : ''}
             </p>
@@ -502,12 +502,12 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
             </p>
           </div>
           <div className="text-center">
-            <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">Target</p>
+            <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">Target</p>
             {level.targetState && <BoardView board={level.targetState} size="sm" />}
             {level.property && (
               <div className="max-w-md text-left" data-testid="theorem">
-                <pre className="whitespace-pre-wrap border-4 border-ink bg-ink p-3 font-mono text-xs text-neon">{theoremText(level.property)}</pre>
-                <p className={`mt-1 font-mono text-xs font-bold ${holds ? 'text-emerald-700' : 'text-magenta'}`} data-testid="theorem-status">
+                <pre className="whitespace-pre-wrap border-4 border-ink bg-abyss p-3 font-mono text-xs text-neon">{theoremText(level.property)}</pre>
+                <p className={`mt-1 font-mono text-xs font-bold ${holds ? 'text-emerald-700 dark:text-emerald-400' : 'text-magenta'}`} data-testid="theorem-status">
                   {holds ? 'isValid holds for the board shown ✓' : `isValid fails: ${violations(shown, level.property)} violation(s) on the board shown`}
                 </p>
               </div>

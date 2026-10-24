@@ -40,7 +40,7 @@ export default function Leaderboard({ player }: Props) {
   const field = 'px-2 py-1 text-sm'
   return (
     <section className="panel-heavy mx-auto max-w-3xl -rotate-[0.4deg] p-6" data-testid="leaderboard-view">
-      <h2 className="mb-5 inline-block border-4 border-ink bg-ink px-3 py-1 text-2xl font-extrabold uppercase tracking-tight text-neon">Hall of Proofs</h2>
+      <h2 className="mb-5 inline-block border-4 border-ink bg-abyss px-3 py-1 text-2xl font-extrabold uppercase tracking-tight text-neon">Hall of Proofs</h2>
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         {(['global', 'friends'] as const).map((t) => (

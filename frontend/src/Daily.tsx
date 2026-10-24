@@ -112,7 +112,7 @@ function DailyView({ info, store }: { info: DailyInfo; store: GameStore }) {
         {copy.state === 'failed' && (
           <div className="mt-2" data-testid="share-status">
             <p className="text-sm font-bold">Your browser said no to the clipboard. Copy this by hand:</p>
-            <textarea readOnly rows={7} value={copy.text} className="mt-1 w-full bg-ink p-2 font-mono text-sm text-neon" onFocus={(e) => e.target.select()} />
+            <textarea readOnly rows={7} value={copy.text} className="mt-1 w-full bg-abyss p-2 font-mono text-sm text-neon" onFocus={(e) => e.target.select()} />
           </div>
         )}
         {reveal.state === 'failed' && <p className="mt-3 border-[3px] border-ink bg-magenta px-2 py-1 text-sm font-bold text-white">{reveal.message}</p>}
@@ -121,7 +121,7 @@ function DailyView({ info, store }: { info: DailyInfo; store: GameStore }) {
             <p className="mb-1 text-sm font-extrabold uppercase">
               The optimal proof: {completion.optimalLines} lines (yours was {completion.lines})
             </p>
-            <pre className="border-4 border-ink bg-ink p-3 font-mono text-sm text-neon" data-testid="optimal-solution-code">{reveal.solution}</pre>
+            <pre className="border-4 border-ink bg-abyss p-3 font-mono text-sm text-neon" data-testid="optimal-solution-code">{reveal.solution}</pre>
             <p className="mt-1 font-mono text-xs font-medium">The shortest single-block proof from the solver. A clever helper macro could be shorter still.</p>
           </div>
         )}

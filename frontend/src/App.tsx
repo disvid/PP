@@ -9,6 +9,7 @@ import type { GameStore } from './Game'
 import Leaderboard from './Leaderboard'
 import Login from './Login'
 import { api, session } from './api'
+import { ThemeToggle } from './theme'
 import { LEVELS, customToLevel, decodeCustom } from './data/levels'
 import type { Level } from './data/levels'
 
@@ -139,9 +140,10 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
           <NavLink to="/battle" className={link} data-testid="nav-battle">Battle</NavLink>
           <NavLink to="/builder" className={link} data-testid="nav-builder">Level Builder</NavLink>
           <NavLink to="/leaderboard" className={link} data-testid="nav-leaderboard">Leaderboard</NavLink>
-          <span className="ml-2 text-sm font-semibold text-paper">
+          <ThemeToggle />
+          <span className="ml-2 text-sm font-semibold text-bone">
             <span className="font-mono text-neon">@{player}</span> ·{' '}
-            <button className="btn-bare !text-paper hover:!text-neon" onClick={signOut} data-testid="sign-out">
+            <button className="btn-bare !text-bone hover:!text-neon" onClick={signOut} data-testid="sign-out">
               bail out
             </button>
           </span>

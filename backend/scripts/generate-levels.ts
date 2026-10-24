@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { boardToRows } from "../../frontend/src/data/levels";
 import { generateBoards, GenOptions, moveToSource } from "../puzzleGenerator";
+import { levelNames } from "./levelNames";
 
 const FIRST_ID = 24;
 const LAST_ID = 67;
@@ -54,16 +55,17 @@ for (const tier of TIERS) {
 }
 
 // within a tier, easier puzzles first (stable for equal lengths), then number the levels 24..67
+const names = levelNames(COUNT); // a distinct "<adjective> <noun>" title for every level
 const rows: object[] = [];
 const solutions: Record<number, string> = {};
 let seq = 0;
 for (const tier of TIERS) {
   const mine = entries.filter((e) => e.tier === tier).sort((a, b) => a.optimal - b.optimal);
-  mine.forEach((e, n) => {
+  mine.forEach((e) => {
     const id = FIRST_ID + seq++;
     rows.push({
       id,
-      title: `${tier.name} ${n + 1}`,
+      title: names[seq - 1], // seq was just incremented for this level
       description: `A freshly scrambled ${tier.size}x${tier.size} board. Swap, paint and rotate it back into the target. Repeating patterns are a hint that a helper could pay off.`,
       ...e.row,
     });

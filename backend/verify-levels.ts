@@ -19,6 +19,12 @@ if (LEVELS.length !== 67) {
   failures++;
   console.log(`  FAIL: expected exactly 67 levels, found ${LEVELS.length}`);
 }
+const seenTitles = new Set<string>();
+for (const lv of LEVELS) {
+  if (seenTitles.has(lv.title)) fail(lv.id, `duplicate title "${lv.title}"`);
+  seenTitles.add(lv.title);
+  if (lv.id >= 24 && /^(Shuffle|Scramble|Chaos)\b/.test(lv.title)) fail(lv.id, `generic title "${lv.title}"`);
+}
 console.log("id  par  optimal  lower-bound  cmds  hint solver");
 LEVELS.forEach((lv, i) => {
   if (lv.id !== i + 1) fail(lv.id, "ids must be 1..N in order");

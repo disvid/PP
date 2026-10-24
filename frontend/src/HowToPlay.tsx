@@ -63,7 +63,7 @@ const STEPS: { title: string; body: ReactNode }[] = [
     body: (
       <>
         <p>Levels cap your line count. Beat the cap by defining a <b>helper</b> once and calling it again and again:</p>
-        <pre className="overflow-x-auto border-4 border-ink bg-ink p-3 font-mono text-xs text-neon">{`def paintTwo(a, b, c, d) := paint(a, b, red); paint(c, d, red)
+        <pre className="overflow-x-auto border-4 border-ink bg-abyss p-3 font-mono text-xs text-neon">{`def paintTwo(a, b, c, d) := paint(a, b, red); paint(c, d, red)
 paintTwo(0, 0, 3, 0)
 paintTwo(0, 3, 3, 3)`}</pre>
         <ul className="list-disc space-y-1 pl-5">
@@ -123,7 +123,7 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[1000] flex items-center justify-center bg-ink/70 p-4"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-abyss/70 p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -141,7 +141,7 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
         transition={{ type: 'spring', stiffness: 320, damping: 26 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b-4 border-ink bg-ink px-6 py-4 text-paper">
+        <div className="flex items-center justify-between border-b-4 border-ink bg-abyss px-6 py-4 text-bone">
           <div>
             <p className="font-mono text-xs uppercase tracking-widest text-neon">
               how to play · {step + 1}/{STEPS.length}

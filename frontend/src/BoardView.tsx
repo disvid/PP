@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, useAnimationControls } from 'framer-motion'
 import type { Block, Board, Color } from './data/levels'
 
-// flat, saturated tile colors: they have to hold their own next to thick black borders
+// flat, saturated tile colors: they have to hold their own next to thick borders
 const HEX: Record<Color, string> = {
   blue: '#2f6bff',
   green: '#16d65a',
@@ -42,22 +42,14 @@ interface Props {
   glide?: boolean
 }
 
-/** The direction arrow. Its angle accumulates, so turning from "left" back to "up" keeps spinning clockwise. */
-function Arrow({ rot, size, animated = true }: { rot: number; size: BoardSize; animated?: boolean }) {
-  const st = useRef({ rot, angle: rot * 90 })
-  if (st.current.rot !== rot) {
-    const d = (rot - st.current.rot + 4) % 4
-    st.current.angle += d === 3 ? -90 : d * 90
-    st.current.rot = rot
-  }
+/** The direction arrow, drawn at its final angle. On a rotate the whole tile spins (see CellView) and carries it there. */
+function Arrow({ rot, size }: { rot: number; size: BoardSize }) {
   const dims = { lg: 'border-x-[9px] border-b-[16px]', md: 'border-x-[7px] border-b-[13px]', sm: 'border-x-[4px] border-b-[8px]' }[size]
   return (
-    <motion.div
+    <div
       data-testid="arrow"
-      className={`h-0 w-0 ${dims} border-x-transparent border-b-ink`}
-      initial={false}
-      animate={{ rotate: animated ? st.current.angle : rot * 90 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+      className={`h-0 w-0 ${dims} border-x-transparent border-b-black`}
+      style={{ transform: `rotate(${rot * 90}deg)` }}
     />
   )
 }
@@ -78,39 +70,62 @@ interface CellProps {
 
 function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClick, testId, glide }: CellProps) {
   const pulse = useAnimationControls()
-  const prev = useRef(block.color)
-  // paint: a quick scale pulse whenever the block's color changes
+  const prevColor = useRef(block.color)
+  const prevRot = useRef(block.rot)
+  // a new key restarts a CSS animation
+  const [spin, setSpin] = useState({ n: 0, quarterTurns: 1 })
+  const [splash, setSplash] = useState(0)
+  const [sliding, setSliding] = useState(false)
+
+  // paint: a scale pulse plus a white splash over the tile
   useEffect(() => {
-    if (prev.current === block.color) return
-    prev.current = block.color
+    if (prevColor.current === block.color) return
+    prevColor.current = block.color
     void pulse.start({ scale: [1, 1.24, 1], transition: { duration: 0.45, ease: 'easeOut' } })
+    setSplash((n) => n + 1)
   }, [block.color, pulse])
+
+  // rotate: the whole tile spins from its old angle to the new one
+  useEffect(() => {
+    const before = prevRot.current
+    prevRot.current = block.rot
+    if (before === undefined || block.rot === undefined || before === block.rot) return
+    // 1 = a clockwise quarter turn, 2 = half turn, 3 = a quarter turn back
+    setSpin((s) => ({ n: s.n + 1, quarterTurns: (block.rot! - before + 4) % 4 }))
+  }, [block.rot])
 
   const dim = { lg: 'h-16 w-16', md: 'h-12 w-12', sm: 'h-8 w-8' }[size]
   return (
     <motion.div
       layout={glide}
       transition={{ layout: GLIDE }}
-      style={{ gridColumn: x + 1, gridRow: y + 1 }}
+      onLayoutAnimationStart={() => setSliding(true)}
+      onLayoutAnimationComplete={() => setSliding(false)}
+      // a sliding tile passes over its neighbours instead of under them
+      style={{ gridColumn: x + 1, gridRow: y + 1, zIndex: sliding ? 20 : 'auto' }}
       className={`${dim} relative ${onClick ? 'cursor-pointer' : ''}`}
       data-testid={testId}
       data-color={block.color}
       data-rot={block.rot ?? ''}
       data-flash={flashed ? 'true' : undefined}
       data-error={isErr ? 'true' : undefined}
+      data-sliding={sliding ? 'true' : undefined}
       onClick={onClick}
     >
       <motion.div className="absolute inset-0" initial={false} animate={pulse}>
-        <motion.div
-          initial={false}
-          animate={{ backgroundColor: HEX[block.color] }}
-          transition={{ duration: 0.3 }}
-          className={`tile ${size === 'sm' ? 'tile-sm' : size === 'md' ? 'tile-md' : ''} relative flex h-full w-full items-center justify-center ${
-            isErr ? 'block-error' : ''
-          } ${flashed ? 'animate-pulse tile-flash' : ''}`}
-        >
-          {block.rot !== undefined && <Arrow rot={block.rot} size={size} />}
-        </motion.div>
+        <div key={spin.n} data-testid="spinner" className={`absolute inset-0 ${spin.n ? `tile-spin-${spin.quarterTurns}` : ''}`}>
+          <motion.div
+            initial={false}
+            animate={{ backgroundColor: HEX[block.color] }}
+            transition={{ duration: 0.3 }}
+            className={`tile ${size === 'sm' ? 'tile-sm' : size === 'md' ? 'tile-md' : ''} relative flex h-full w-full items-center justify-center ${
+              sliding ? 'tile-lifted' : ''
+            } ${isErr ? 'block-error' : ''} ${flashed ? 'animate-pulse tile-flash' : ''}`}
+          >
+            {block.rot !== undefined && <Arrow rot={block.rot} size={size} />}
+          </motion.div>
+        </div>
+        {splash > 0 && <div key={splash} data-testid="splash" className="paint-splash absolute inset-0" />}
       </motion.div>
 
       {ghost && (
@@ -119,7 +134,7 @@ function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClic
           className="pointer-events-none absolute inset-0 flex items-center justify-center border-4 border-dashed border-ink opacity-70"
           style={{ backgroundColor: HEX[ghost.color] }}
         >
-          {ghost.rot !== undefined && <Arrow rot={ghost.rot} size={size} animated={false} />}
+          {ghost.rot !== undefined && <Arrow rot={ghost.rot} size={size} />}
         </div>
       )}
       {flashed && flashColor && (
@@ -141,7 +156,11 @@ export default function BoardView({ board, ids, errorCells = [], size = 'lg', gh
   return (
     <div
       className={`inline-grid bg-card border-ink ${
-        { lg: 'gap-2 border-4 p-3 shadow-[6px_6px_0_#0a0a0a]', md: 'gap-1.5 border-4 p-2 shadow-[5px_5px_0_#0a0a0a]', sm: 'gap-1 border-[3px] p-1.5 shadow-[3px_3px_0_#0a0a0a]' }[size]
+        {
+          lg: 'gap-2 border-4 p-3 shadow-[6px_6px_0_var(--shade)]',
+          md: 'gap-1.5 border-4 p-2 shadow-[5px_5px_0_var(--shade)]',
+          sm: 'gap-1 border-[3px] p-1.5 shadow-[3px_3px_0_var(--shade)]',
+        }[size]
       }`}
       style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
     >

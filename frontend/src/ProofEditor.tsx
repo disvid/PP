@@ -121,6 +121,7 @@ export default function ProofEditor({ value, resetKey, readOnly, onChange, activ
       glyphMargin: false,
       folding: false,
       lineNumbersMinChars: 3,
+      lineDecorationsWidth: 16, // room for the arrow beside the line being executed
       cursorBlinking: 'smooth',
       smoothScrolling: true,
       scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
@@ -154,7 +155,7 @@ export default function ProofEditor({ value, resetKey, readOnly, onChange, activ
     if (!ready || !e || !model) return
     const whole = (line: number, className: string) => ({
       range: new monaco.Range(line, 1, line, 1),
-      options: { isWholeLine: true, className },
+      options: { isWholeLine: true, className, ...(className === 'ln-active' ? { linesDecorationsClassName: 'ln-active-gutter' } : {}) },
     })
     decorations.current?.set([
       ...(activeLine && activeLine <= model.getLineCount() ? [whole(activeLine, 'ln-active')] : []),
@@ -170,7 +171,7 @@ export default function ProofEditor({ value, resetKey, readOnly, onChange, activ
   }, [ready, activeLine, errorLine, errorText, resetKey])
 
   return (
-    <div data-testid="editor" className="h-72 overflow-hidden border-4 border-ink bg-ink">
+    <div data-testid="editor" className="h-72 overflow-hidden border-4 border-ink bg-abyss">
       <Editor
         height="100%"
         path={resetKey}
