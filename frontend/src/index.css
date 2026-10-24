@@ -163,6 +163,20 @@ button:disabled {
   color: var(--color-neon);
 }
 /* links that should look like text, and tiny controls that should not be keys */
+/* square icon button: centred glyph */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  line-height: 1;
+}
+.btn-icon > svg {
+  display: block;
+}
+
 .btn-bare,
 button.btn-bare {
   border: 0;

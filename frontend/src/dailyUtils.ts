@@ -24,7 +24,7 @@ export const isOptimal = (r: Pick<DailyResult, 'lines' | 'optimalLines'>) => r.l
 /** The text copied by the Share button. */
 export function shareText(r: DailyResult, link: string): string {
   const head = isOptimal(r)
-    ? `Proof Puzzle Daily #${r.number} - Optimal Score! ⭐`
-    : `Proof Puzzle Daily #${r.number} - Solved in ${r.lines} lines (optimal ${r.optimalLines})`
+    ? `Swappr Daily #${r.number} - Optimal Score! ⭐`
+    : `Swappr Daily #${r.number} - Solved in ${r.lines} lines (optimal ${r.optimalLines})`
   return [head, ...r.rows, link].join('\n')
 }

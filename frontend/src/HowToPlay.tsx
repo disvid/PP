@@ -210,7 +210,7 @@ export default function HowToPlay({ open, onOpen, onClose }: Props) {
         data-testid="nav-howto"
         aria-label="How to play"
         title="How to play"
-        className="btn-magenta flex h-8 w-8 items-center justify-center p-0 text-base font-extrabold leading-none"
+        className="btn-magenta btn-icon text-base font-extrabold"
       >
         ?
       </button>

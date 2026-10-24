@@ -1,4 +1,4 @@
-# Proof Puzzle
+# Swappr
 
 Write move scripts to turn the board into the target. 67 levels: 23 hand-designed ones in five phases (basics, combinations, macros, advanced, property targets) followed by 44 procedurally generated scrambles that grow from 3x3 to 5x5 and from 3-move to 11-move proofs. Levels live in `frontend/src/data/levels.ts`, shared by the UI and the backend.
 

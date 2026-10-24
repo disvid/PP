@@ -143,7 +143,7 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
         {/* left: logo plus the two icon shortcuts */}
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="-rotate-2 border-4 border-ink bg-neon px-3 py-0.5 text-2xl font-extrabold uppercase tracking-tight text-ink shadow-[4px_4px_0_#e4007c]">
-            Proof Puzzle
+            Swappr
           </h1>
           <HowToPlay open={isHowToPlayOpen} onOpen={() => setIsHowToPlayOpen(true)} onClose={() => setIsHowToPlayOpen(false)} />
           <NavLink
@@ -151,7 +151,7 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
             aria-label="Leaderboard"
             title="Leaderboard"
             data-testid="nav-leaderboard"
-            className={({ isActive }) => `btn flex h-8 w-8 items-center justify-center p-0 ${isActive ? 'btn-neon -translate-y-0.5' : 'btn-paper'}`}
+            className={({ isActive }) => `btn btn-icon ${isActive ? 'btn-neon -translate-y-0.5' : 'btn-paper'}`}
           >
             <TrophyIcon />
           </NavLink>

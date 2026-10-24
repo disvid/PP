@@ -61,7 +61,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       aria-pressed={dark}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className={`btn-paper flex h-8 w-8 items-center justify-center p-0 text-base leading-none ${className}`}
+      className={`btn-paper btn-icon text-base ${className}`}
     >
       {dark ? '☀' : '☾'}
     </button>

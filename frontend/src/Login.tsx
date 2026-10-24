@@ -57,9 +57,12 @@ export default function Login({ onLogin }: Props) {
       <ThemeToggle className="absolute right-4 top-4" />
       <div>
         <h1 className="inline-block -rotate-2 border-[5px] border-ink bg-neon px-4 py-1 text-5xl font-extrabold uppercase leading-none tracking-tight shadow-[8px_8px_0_#e4007c]">
-          Proof Puzzle
+          Swappr
         </h1>
-        <p className="mt-6 max-w-sm text-lg font-semibold leading-snug">
+        <p data-testid="tagline" className="mt-4 text-xl font-extrabold uppercase tracking-tight text-magenta dark:text-neon">
+          Show the world how you move it
+        </p>
+        <p className="mt-4 max-w-sm text-lg font-semibold leading-snug">
           Shove colored blocks around with tiny programs. Fewer lines, faster hands, louder bragging rights.
         </p>
       </div>

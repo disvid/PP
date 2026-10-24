@@ -291,4 +291,4 @@ app.post("/api/evaluate", async (req, res) => {
 const PORT = Number(process.env.PORT || 3000);
 const server = http.createServer(app);
 attachBattles(server);
-server.listen(PORT, () => console.log(`Proof Puzzle backend listening on port ${PORT}`));
+server.listen(PORT, () => console.log(`Swappr backend listening on port ${PORT}`));
