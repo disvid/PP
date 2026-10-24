@@ -5,10 +5,13 @@ interface Props {
   onLogin: (name: string) => void
 }
 
-/** Landing page. One form for both cases: a known username must give its password, an unknown one is registered with it. */
+type Mode = 'signin' | 'signup'
+
+/** Landing page: a Sign In / Sign Up toggle over one username + password form. */
 export default function Login({ onLogin }: Props) {
   const [saved, setSaved] = useState<string | null>(null)
-  const [name, setName] = useState('')
+  const [mode, setMode] = useState<Mode>('signin')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -21,14 +24,23 @@ export default function Login({ onLogin }: Props) {
     })
   }, [])
 
-  const join = async (e: React.FormEvent) => {
+  const switchMode = (next: Mode) => {
+    setMode(next)
+    setError('')
+    setPassword('')
+  }
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setError('')
     try {
-      // a known username must present its password; an unknown one is registered with the password given
-      const r = await api<{ name: string; token: string; error?: string }>('/api/login', { name: name.trim(), password })
-      if (!r.ok) return setError(r.data.error ?? 'That login bounced. Try again.')
+      // both routes take { username, password } and answer with a JWT
+      const r = await api<{ name: string; token: string; error?: string }>(mode === 'signin' ? '/api/login' : '/api/register', {
+        username: username.trim(),
+        password,
+      })
+      if (!r.ok) return setError(r.data.error ?? 'That did not work. Try again.')
       session.set(r.data.name, r.data.token)
       onLogin(r.data.name)
     } catch {
@@ -38,6 +50,7 @@ export default function Login({ onLogin }: Props) {
     }
   }
 
+  const signup = mode === 'signup'
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-8 px-5 py-10" data-testid="login">
       <div>
@@ -55,41 +68,71 @@ export default function Login({ onLogin }: Props) {
         </button>
       )}
 
-      <form onSubmit={join} className="panel-heavy flex rotate-1 flex-col gap-4 p-6">
-        <label className="text-xl font-extrabold uppercase tracking-tight" htmlFor="username">
-          {saved ? 'Or become someone else' : 'Enter your credentials to initialize.'}
+      <form onSubmit={submit} className="panel-heavy flex rotate-1 flex-col gap-4 p-6">
+        <div className="flex gap-3" role="group" aria-label="Sign in or sign up">
+          <button type="button" data-testid="mode-signin" aria-pressed={!signup} onClick={() => switchMode('signin')} className={`flex-1 px-3 py-2 text-lg uppercase ${signup ? 'btn-paper' : 'btn-neon'}`}>
+            Sign In
+          </button>
+          <button type="button" data-testid="mode-signup" aria-pressed={signup} onClick={() => switchMode('signup')} className={`flex-1 px-3 py-2 text-lg uppercase ${signup ? 'btn-neon' : 'btn-paper'}`}>
+            Sign Up
+          </button>
+        </div>
+
+        <h2 className="text-xl font-extrabold uppercase tracking-tight">{signup ? 'Make a new account.' : 'Welcome back, hacker.'}</h2>
+
+        <label className="flex flex-col gap-1 text-sm font-bold" htmlFor="username">
+          Username
+          <input
+            id="username"
+            data-testid="username"
+            required
+            minLength={2}
+            maxLength={20}
+            autoFocus
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="lambda_wolf"
+            className="px-3 py-2 font-mono text-lg font-normal"
+          />
         </label>
-        <input
-          id="username"
-          data-testid="username"
-          autoFocus
-          autoComplete="off"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="username (lambda_wolf)"
-          className="px-3 py-2 font-mono text-lg"
-        />
-        <input
-          id="password"
-          data-testid="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="password (8+ characters)"
-          className="px-3 py-2 font-mono text-lg"
-        />
-        <p className="font-mono text-xs">
-          Username: 2-20 chars (letters, digits, _ or -). Password: 8-72 chars. New username? We&apos;ll create the account with this password. Known username? Prove it&apos;s you.
-        </p>
+        <label className="flex flex-col gap-1 text-sm font-bold" htmlFor="password">
+          Password
+          <input
+            id="password"
+            data-testid="password"
+            type="password"
+            required
+            minLength={signup ? 8 : undefined}
+            maxLength={72}
+            autoComplete={signup ? 'new-password' : 'current-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={signup ? '8 or more characters' : 'your password'}
+            className="px-3 py-2 font-mono text-lg font-normal"
+          />
+        </label>
+
+        {signup && <p className="font-mono text-xs">Username: 2-20 characters (letters, digits, _ or -). Password: 8-72 characters.</p>}
         {error && (
           <p className="border-[3px] border-ink bg-magenta px-3 py-2 text-sm font-bold text-white" data-testid="login-error">
             {error}
           </p>
         )}
-        <button type="submit" disabled={busy || name.trim().length < 2 || password.length < 8} className="btn-neon px-4 py-3 text-lg uppercase">
-          Initialize ▸
+        <button
+          type="submit"
+          data-testid="auth-submit"
+          disabled={busy || username.trim().length < 2 || password.length < (signup ? 8 : 1)}
+          className="btn-neon px-4 py-3 text-lg uppercase"
+        >
+          {signup ? 'Create account ▸' : 'Sign in ▸'}
         </button>
+        <p className="text-center text-sm font-semibold">
+          {signup ? 'Already have an account? ' : 'No account yet? '}
+          <button type="button" className="btn-bare" onClick={() => switchMode(signup ? 'signin' : 'signup')}>
+            {signup ? 'Switch to Sign In' : 'Switch to Sign Up'}
+          </button>
+        </p>
       </form>
     </main>
   )

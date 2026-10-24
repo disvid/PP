@@ -83,9 +83,11 @@ interface Props {
   /** play exactly this level (the Daily Theorem): no level picker, no Next Level */
   fixedLevel?: Level
   onSolved?: (info: SolveInfo) => void
+  /** why this level can no longer be played (a daily that was already completed); shown instead of the Start button */
+  locked?: string
 }
 
-export default function Game({ store, fixedLevel, onSolved }: Props) {
+export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
   const { customLevel, codes, solved, setCustomLevel, setLevelIdx, setCodes, setSolved } = store
   const [searchParams, setSearchParams] = useSearchParams()
   const levels = useMemo(
@@ -172,6 +174,7 @@ export default function Game({ store, fixedLevel, onSolved }: Props) {
   }
 
   const startLevel = async () => {
+    if (locked) return
     if (await startClock(level)) {
       setStarted(true)
       setStatus({ text: '', kind: 'info' })
@@ -287,6 +290,12 @@ export default function Game({ store, fixedLevel, onSolved }: Props) {
     let res: EvalResponse
     try {
       res = (await api<EvalResponse>('/api/evaluate', { ...levelRef(level), code })).data
+      if (res.locked) {
+        // the server refused the run: today's daily was already completed (maybe from another device)
+        setRunning(false)
+        setStatus({ text: res.message, kind: 'bad' })
+        return
+      }
       if (!res.steps) throw new Error('bad response')
     } catch {
       setRunning(false)
@@ -424,13 +433,13 @@ export default function Game({ store, fixedLevel, onSolved }: Props) {
           />
           <p className="mt-3 font-mono text-xs font-medium">swap(x1, y1, x2, y2) · paint(x, y, color) · rotate(x, y) · def name(a, b) := cmd; cmd</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button onClick={run} disabled={running || !started} className="btn-neon px-5 py-2">
+            <button onClick={run} disabled={running || !started || !!locked} className="btn-neon px-5 py-2">
               Run Proof
             </button>
             <button onClick={() => resetBoard(level)} disabled={!started} className="btn-paper px-4 py-2">
               Reset
             </button>
-            <button data-testid="hint-button" onClick={askHint} disabled={running || !started || won} className="btn-magenta px-4 py-2" title="Costs 150 points and 30 seconds">
+            <button data-testid="hint-button" onClick={askHint} disabled={running || !started || won || !!locked} className="btn-magenta px-4 py-2" title="Costs 150 points and 30 seconds">
               Hint
             </button>
             {won && !isLast && !fixedLevel && (
@@ -511,12 +520,20 @@ export default function Game({ store, fixedLevel, onSolved }: Props) {
               className="hatch absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 border-4 border-ink bg-paper/95 p-4 text-center"
             >
               <p className="text-2xl font-extrabold uppercase tracking-tight">{level.custom ? level.title : `Level ${level.id}: ${level.title}`}</p>
-              <p className="max-w-xs text-sm font-semibold">
-                Par {level.parLimit} lines. The clock only ticks once you hit start, and the editor stays locked until then. Breathe first.
-              </p>
-              <button data-testid="start-level" onClick={startLevel} className="btn-neon px-8 py-3 text-xl uppercase">
-                {clock.base > 0 ? 'Resume Level' : 'Start Level'}
-              </button>
+              {locked ? (
+                <p className="max-w-xs border-[3px] border-ink bg-neon px-3 py-2 text-sm font-bold" data-testid="locked-note">
+                  {locked}
+                </p>
+              ) : (
+                <>
+                  <p className="max-w-xs text-sm font-semibold">
+                    Par {level.parLimit} lines. The clock only ticks once you hit start, and the editor stays locked until then. Breathe first.
+                  </p>
+                  <button data-testid="start-level" onClick={startLevel} className="btn-neon px-8 py-3 text-xl uppercase">
+                    {clock.base > 0 ? 'Resume Level' : 'Start Level'}
+                  </button>
+                </>
+              )}
               {status.kind === 'bad' && <p className="border-[3px] border-ink bg-magenta px-2 py-1 text-sm font-bold text-white">{status.text}</p>}
             </div>
           )}

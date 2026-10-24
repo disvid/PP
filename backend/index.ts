@@ -4,15 +4,15 @@ import cors from "cors";
 import { customToLevel, decodeCustom, encodeCustom, Level, LEVELS, levelKey, validateCustom } from "../frontend/src/data/levels";
 import { computeScore, countLines, HINT_POINTS, HINT_TIME_MS } from "../frontend/src/data/scoring";
 import {
-  addFriend, addHint, friendNames, insertUser, leaderboard, pauseSession, recordSolve, saveCustomLevel, sessionOf,
+  addFriend, addHint, dailyByLevelKey, dailyCompletion, friendNames, insertUser, leaderboard, pauseSession, recordDailyCompletion, recordSolve, saveCustomLevel, sessionOf,
   setPasswordHash, startSession, User, userByName, userRowByName,
 } from "./db";
 import { attachBattles } from "./battle";
-import { checkPassword, clearFailures, hashPassword, passwordProblem, recordFailure, signToken, tooManyFailures, verifyToken } from "./auth";
+import { checkPassword, clearFailures, dummyPasswordCheck, hashPassword, MAX_PASSWORD_BYTES, passwordProblem, recordFailure, signToken, tooManyFailures, verifyToken } from "./auth";
 import { corsOrigin, publicBaseUrl } from "./config";
 import { boardAfter, previewLine, PuzzleError } from "./engine";
 import { findHint } from "./hint";
-import { generatePuzzle } from "./puzzleGenerator";
+import { todaysDaily } from "./daily";
 import { evaluateProof, leanAvailable } from "./proof";
 
 declare module "express-serve-static-core" {
@@ -58,36 +58,61 @@ const publicUrl = (req: Request) => publicBaseUrl(req.header("origin"));
 app.get("/api/health", (_req, res) => void res.json({ ok: true }));
 
 // ---- accounts: username + password (bcrypt), sessions are signed JWTs ----------------------------------
-// One endpoint for both: an unknown username registers a new account with the given password, a known one must
-// present its password. Accounts made before passwords existed have no hash yet, and the first sign-in claims them.
-app.post("/api/login", async (req, res) => {
-  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-  const password: unknown = req.body?.password;
-  if (!/^[\w-]{2,20}$/.test(name)) return void res.status(400).json({ error: "Usernames are 2-20 characters: letters, digits, _ or -" });
-  const problem = passwordProblem(password);
-  if (problem) return void res.status(400).json({ error: problem });
-  const pw = password as string;
+// Two routes, matching the Sign In / Sign Up toggle in the UI. Both take { username, password } (`name` is accepted
+// as an old alias for `username`) and answer with a JWT.
+const BAD_LOGIN = "Wrong username or password.";
 
-  const guardKey = `${req.ip}|${name.toLowerCase()}`;
+function readUsername(body: { username?: unknown; name?: unknown } | undefined): string | null {
+  const raw = body?.username ?? body?.name;
+  const username = typeof raw === "string" ? raw.trim() : "";
+  return /^[\w-]{2,20}$/.test(username) ? username : null;
+}
+const USERNAME_RULE = "Usernames are 2-20 characters: letters, digits, _ or -";
+
+app.post("/api/register", async (req, res) => {
+  const username = readUsername(req.body);
+  if (!username) return void res.status(400).json({ error: USERNAME_RULE });
+  const problem = passwordProblem(req.body?.password);
+  if (problem) return void res.status(400).json({ error: problem });
+
+  // every attempt counts, so one address cannot mass-register accounts
+  const guardKey = `register|${req.ip}`;
+  if (tooManyFailures(guardKey)) return void res.status(429).json({ error: "Too many sign-up attempts. Wait a few minutes and try again." });
+  recordFailure(guardKey);
+
+  if (userRowByName(username)) return void res.status(409).json({ error: "That username is taken. Pick another, or switch to Sign In." });
+  try {
+    const user = insertUser(username, await hashPassword(req.body.password as string));
+    res.status(201).json({ name: user.name, token: signToken(user), created: true });
+  } catch {
+    // someone registered the same name between the lookup and the insert
+    res.status(409).json({ error: "That username was just taken. Pick another." });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  const username = readUsername(req.body);
+  const password: unknown = req.body?.password;
+  if (!username) return void res.status(400).json({ error: USERNAME_RULE });
+  if (typeof password !== "string" || password.length === 0 || Buffer.byteLength(password) > MAX_PASSWORD_BYTES) {
+    return void res.status(400).json({ error: "Enter your password." });
+  }
+
+  const guardKey = `${req.ip}|${username.toLowerCase()}`;
   if (tooManyFailures(guardKey)) return void res.status(429).json({ error: "Too many failed attempts. Wait a few minutes and try again." });
 
-  const row = userRowByName(name);
-  if (!row) {
-    try {
-      const user = insertUser(name, await hashPassword(pw));
-      return void res.json({ name: user.name, token: signToken(user), created: true });
-    } catch {
-      // someone registered the same name between the lookup and the insert
-      return void res.status(409).json({ error: "That username was just taken. Try signing in again." });
-    }
-  }
-  if (!row.passwordHash) {
-    setPasswordHash(row.id, await hashPassword(pw));
+  const row = userRowByName(username);
+  // an account from before passwords existed has no hash yet: signing in once sets the password
+  if (row && !row.passwordHash) {
+    const problem = passwordProblem(password);
+    if (problem) return void res.status(400).json({ error: `${problem} This account predates passwords: choose the password you want to use from now on.` });
+    setPasswordHash(row.id, await hashPassword(password));
     return void res.json({ name: row.name, token: signToken(row), created: false, claimed: true });
   }
-  if (!(await checkPassword(pw, row.passwordHash))) {
+  const ok = row?.passwordHash ? await checkPassword(password, row.passwordHash) : (await dummyPasswordCheck(password), false);
+  if (!row || !ok) {
     recordFailure(guardKey);
-    return void res.status(401).json({ error: "That username exists, but the password does not match." });
+    return void res.status(401).json({ error: BAD_LOGIN });
   }
   clearFailures(guardKey);
   res.json({ name: row.name, token: signToken(row), created: false });
@@ -122,11 +147,22 @@ app.get("/api/leaderboard/friends", (req, res) => {
   res.json(leaderboard(ids, level));
 });
 
+// ---- the daily is a one-shot: the first valid proof (any length) uses up the day's attempt --------------
+const LOCKED_MESSAGE = "You already completed this daily theorem. One valid proof per day: come back after 00:00 UTC for the next one.";
+
+/** If `level` is one of the generated daily puzzles: which one, and whether `user` has already completed it. */
+function dailyLock(level: Level, user?: User) {
+  const daily = dailyByLevelKey(levelKey(level));
+  if (!daily) return null;
+  return { daily, completion: user ? dailyCompletion(user.id, daily.date) : undefined };
+}
+
 // ---- level clock ----------------------------------------------------------------------
 app.post("/api/sessions/start", (req, res) => {
   const user = requireUser(req, res);
   const level = user && levelFrom(req, res);
   if (!user || !level) return;
+  if (dailyLock(level, user)?.completion) return void res.status(409).json({ locked: true, error: LOCKED_MESSAGE });
   res.json(startSession(user.id, levelKey(level)));
 });
 
@@ -170,6 +206,7 @@ app.post("/api/hint", (req, res) => {
   const user = requireUser(req, res);
   const level = user && levelFrom(req, res);
   if (!user || !level) return;
+  if (dailyLock(level, user)?.completion) return void res.status(409).json({ locked: true, error: { message: LOCKED_MESSAGE } });
   if (!sessionOf(user.id, levelKey(level))) return void res.status(409).json({ error: { message: "Start the level first" } });
   const board = boardAfter(level, String(req.body.code ?? ""));
   const hint = findHint(level, board);
@@ -179,20 +216,35 @@ app.post("/api/hint", (req, res) => {
   res.json({ hint, hints, penalty: { points: HINT_POINTS, timeMs: HINT_TIME_MS }, solver: leanAvailable ? "lean" : "heuristic" });
 });
 
-// ---- Daily Theorem: one generated puzzle per UTC day, identical for every player ------------------------
-// The generator is seeded with the date, so the puzzle needs no storage: any server instance, at any time that day,
-// produces the same board. It reaches the browser as a custom-level payload and is played (and scored) like one.
-const DAILY_EPOCH = Date.UTC(2026, 0, 1); // puzzle #1
-let dailyCache: { date: string; number: number; level: string } | null = null;
+// ---- Daily Theorem -------------------------------------------------------------------------------------
+// One generated puzzle per UTC day (see daily.ts). It reaches the browser as a custom-level payload and is played
+// like one; the server recognises it by its level key to enforce the one-valid-proof-per-day rule.
+app.get("/api/daily", (req, res) => {
+  const d = todaysDaily();
+  const c = req.user ? dailyCompletion(req.user.id, d.date) : undefined;
+  res.json({
+    date: d.date,
+    number: d.number,
+    level: d.payload,
+    // the signed-in player's result for today, if they have already used their attempt
+    completion: c
+      ? { lines: c.lines, optimalLines: c.optimal_lines, points: c.points, canRevealSolution: c.lines > c.optimal_lines }
+      : null,
+  });
+});
 
-app.get("/api/daily", (_req, res) => {
-  const date = new Date().toISOString().slice(0, 10);
-  if (dailyCache?.date !== date) {
-    const [y, m, d] = date.split("-").map(Number);
-    const number = Math.floor((Date.UTC(y, m - 1, d) - DAILY_EPOCH) / 86_400_000) + 1;
-    dailyCache = { date, number, level: generatePuzzle(`proof-puzzle-daily-${date}`, `Daily Theorem #${number}`).payload };
-  }
-  res.json(dailyCache);
+/**
+ * The shortest proof (from the BFS solver in puzzleGenerator.ts) for today's puzzle. Only players who have already
+ * completed it with a longer proof than the optimum may see it: it is the "Show Optimal Solution" reveal.
+ */
+app.get("/api/daily/solution", (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const d = todaysDaily();
+  const c = dailyCompletion(user.id, d.date);
+  if (!c) return void res.status(403).json({ error: "Complete today's daily first: the optimal proof is only shown afterwards." });
+  if (c.lines <= c.optimal_lines) return void res.status(403).json({ error: "Your proof was already as short as the optimum, so there is nothing to reveal." });
+  res.json({ date: d.date, number: d.number, optimalLines: d.optimal_lines, yourLines: c.lines, solution: d.solution });
 });
 
 // ---- evaluation ---------------------------------------------------------------------------
@@ -201,17 +253,33 @@ app.post("/api/evaluate", async (req, res) => {
   if (!level) return;
   const { code } = req.body;
   if (typeof code !== "string") return void res.status(400).json({ error: { line: 0, message: "Bad request", cells: [] } });
+  const lock = dailyLock(level, req.user);
+  if (lock?.completion) {
+    return void res.status(409).json({
+      locked: true, engine: "mock", steps: [], solved: false, linesUsed: 0, score: null,
+      error: { line: 0, message: LOCKED_MESSAGE, cells: [] }, message: LOCKED_MESSAGE,
+    });
+  }
   try {
     const result = await evaluateProof(level, code);
     let score = null;
-    // A score needs a started level: the server clock is the only time source.
-    const session = req.user ? sessionOf(req.user.id, levelKey(level)) : undefined;
-    if (result.solved && req.user && session) {
+    if (result.solved && req.user) {
+      const key = levelKey(level);
       const lines = countLines(code);
-      score = computeScore({ optimalLines: level.optimalLines, lines, elapsedMs: session.elapsedMs, hints: session.hints });
-      Object.assign(score, recordSolve(req.user.id, levelKey(level), lines, session.elapsedMs, session.hints, score), {
-        elapsedMs: session.elapsedMs,
-      });
+      // A score needs a started level: the server clock is the only time source.
+      const session = sessionOf(req.user.id, key);
+      const computed = session ? computeScore({ optimalLines: level.optimalLines, lines, elapsedMs: session.elapsedMs, hints: session.hints }) : null;
+      // On a daily, the first valid proof (whatever its length) uses up the attempt. If another request got there
+      // first, this one is refused and scores nothing.
+      if (lock && !recordDailyCompletion(req.user.id, lock.daily.date, lines, lock.daily.optimal_lines, computed?.total ?? null, session?.elapsedMs ?? null)) {
+        return void res.status(409).json({
+          locked: true, engine: "mock", steps: [], solved: false, linesUsed: 0, score: null,
+          error: { line: 0, message: LOCKED_MESSAGE, cells: [] }, message: LOCKED_MESSAGE,
+        });
+      }
+      if (computed && session) {
+        score = Object.assign(computed, recordSolve(req.user.id, key, lines, session.elapsedMs, session.hints, computed), { elapsedMs: session.elapsedMs });
+      }
     }
     res.json({ ...result, score });
   } catch (e) {

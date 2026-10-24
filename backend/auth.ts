@@ -47,6 +47,11 @@ export function passwordProblem(password: unknown): string | null {
 }
 
 export const hashPassword = (password: string) => bcrypt.hash(password, 10);
+
+// A throwaway hash, so that signing in as a username that does not exist costs as much time as a wrong password
+// does (otherwise response time would reveal which usernames are registered).
+const DUMMY_HASH = bcrypt.hashSync(crypto.randomBytes(16).toString("hex"), 10);
+export const dummyPasswordCheck = (password: string) => bcrypt.compare(password, DUMMY_HASH);
 export const checkPassword = (password: string, hash: string) => bcrypt.compare(password, hash);
 
 // ---- brute-force guard: failed sign-ins per (ip, alias) in a sliding window ------------------------------

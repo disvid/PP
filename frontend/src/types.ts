@@ -9,6 +9,8 @@ export interface EvalResponse {
   solved: boolean
   linesUsed: number
   message: string
+  /** the server refused the run: a daily puzzle that was already completed */
+  locked?: boolean
   score: {
     base: number
     optimality: number

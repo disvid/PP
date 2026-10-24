@@ -53,6 +53,26 @@ db.exec(`
     friend_id INTEGER NOT NULL REFERENCES users(id),
     PRIMARY KEY (user_id, friend_id)
   );
+  -- the Daily Theorem of each UTC day (generated from the date), with a shortest proof for the "show optimal" reveal
+  CREATE TABLE IF NOT EXISTS daily_puzzles (
+    date TEXT PRIMARY KEY,
+    number INTEGER NOT NULL,
+    level_key TEXT NOT NULL UNIQUE,
+    payload TEXT NOT NULL,
+    optimal_lines INTEGER NOT NULL,
+    solution TEXT NOT NULL
+  );
+  -- one row per player and day: the first valid proof uses up that day's attempt, whatever its length
+  CREATE TABLE IF NOT EXISTS daily_completions (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    date TEXT NOT NULL REFERENCES daily_puzzles(date),
+    lines INTEGER NOT NULL,
+    optimal_lines INTEGER NOT NULL,
+    points INTEGER,
+    time_ms INTEGER,
+    completed_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, date)
+  );
   -- server-side clock: counts only while the level is open on the Game view (pausable), so the
   -- client cannot fake its time. Closing the tab without pausing keeps the clock running.
   DROP TABLE IF EXISTS sessions;
@@ -143,6 +163,13 @@ const q = {
   ),
   addFriend: db.prepare("INSERT OR IGNORE INTO friends (user_id, friend_id) VALUES (?, ?)"),
   friendsOf: db.prepare("SELECT u.name FROM friends f JOIN users u ON u.id = f.friend_id WHERE f.user_id = ? ORDER BY u.name"),
+  putDaily: db.prepare("INSERT OR IGNORE INTO daily_puzzles (date, number, level_key, payload, optimal_lines, solution) VALUES (?, ?, ?, ?, ?, ?)"),
+  dailyByDate: db.prepare("SELECT date, number, level_key, payload, optimal_lines, solution FROM daily_puzzles WHERE date = ?"),
+  dailyByKey: db.prepare("SELECT date, number, level_key, payload, optimal_lines, solution FROM daily_puzzles WHERE level_key = ?"),
+  getCompletion: db.prepare("SELECT lines, optimal_lines, points, time_ms, completed_at FROM daily_completions WHERE user_id = ? AND date = ?"),
+  putCompletion: db.prepare(
+    "INSERT OR IGNORE INTO daily_completions (user_id, date, lines, optimal_lines, points, time_ms, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ),
   putCustom: db.prepare("INSERT OR IGNORE INTO custom_levels (id, creator_id, title, payload, created_at) VALUES (?, ?, ?, ?, ?)"),
 };
 
@@ -229,4 +256,38 @@ export function leaderboard(userIds?: number[], levelKey?: string, limit = 20): 
     )
     .all(...args, limit) as Omit<BoardRow, "rank">[];
   return rows.map((r, i) => ({ rank: i + 1, ...r }));
+}
+
+// ---- Daily Theorem ---------------------------------------------------------------------------------
+export interface DailyPuzzleRow {
+  date: string;
+  number: number;
+  level_key: string;
+  payload: string;
+  optimal_lines: number;
+  solution: string;
+}
+export interface DailyCompletion {
+  lines: number;
+  optimal_lines: number;
+  points: number | null;
+  time_ms: number | null;
+  completed_at: number;
+}
+
+export const saveDailyPuzzle = (p: DailyPuzzleRow) =>
+  void q.putDaily.run(p.date, p.number, p.level_key, p.payload, p.optimal_lines, p.solution);
+export const dailyByDate = (date: string) => q.dailyByDate.get(date) as DailyPuzzleRow | undefined;
+/** The daily puzzle with this level key, if the level being played is one. */
+export const dailyByLevelKey = (key: string) => q.dailyByKey.get(key) as DailyPuzzleRow | undefined;
+export const dailyCompletion = (userId: number, date: string) => q.getCompletion.get(userId, date) as DailyCompletion | undefined;
+
+/**
+ * Records the player's valid proof for that day. Returns true for the first one; false if the day was already
+ * completed (a second request that raced the first), in which case nothing is stored.
+ */
+export function recordDailyCompletion(
+  userId: number, date: string, lines: number, optimalLines: number, points: number | null, timeMs: number | null,
+): boolean {
+  return Number(q.putCompletion.run(userId, date, lines, optimalLines, points, timeMs, Date.now()).changes) === 1;
 }

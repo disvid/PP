@@ -17,11 +17,15 @@ const PASSWORD = process.env.BOT_PASSWORD ?? "battle-bot-password";
 const [name = "erin", mode = "partial"] = process.argv.slice(2);
 
 async function main() {
-  const login = await fetch(`${API}/api/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, password: PASSWORD }),
-  });
+  // sign in; the first time this bot name is used there is no account yet, so register it
+  const post = (route: string) =>
+    fetch(`${API}${route}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: name, password: PASSWORD }),
+    });
+  let login = await post("/api/login");
+  if (login.status === 401) login = await post("/api/register");
   const body = (await login.json()) as { token?: string; error?: string };
   if (!body.token) throw new Error(`login failed: ${body.error}`);
   const socket = io(API, { auth: { token: body.token } });
