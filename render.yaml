@@ -1,5 +1,12 @@
-# Render Blueprint for the backend. In the Render dashboard: New > Blueprint > pick this repository.
-# (The frontend goes to Vercel with Root Directory "frontend"; see the README.)
+# Render Blueprint for the backend, on Render's FREE plan (no payment details needed).
+# In the Render dashboard: New > Blueprint > pick this repository.
+# (The frontend goes to Vercel's free Hobby plan with Root Directory "frontend"; see the README.)
+#
+# Free-plan limits to know about:
+#  - there is no persistent disk, so the SQLite file is wiped whenever the service restarts. The free service also
+#    goes to sleep after ~15 minutes without traffic and cold-starts (about a minute) on the next request, so accounts
+#    and scores effectively reset after idle periods. Fine for a demo; for real persistence see the README.
+#  - a free service is a single instance, which is also what battles need (their queue lives in memory).
 
 services:
   - type: web
@@ -8,15 +15,8 @@ services:
     # the image needs frontend/src/data (shared level data), so the build context is the repository root
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
-    # persistent disks are not available on the free plan; on a free instance every restart wipes accounts and scores
-    plan: starter
-    # battles and the matchmaking queue live in memory, so never run more than one instance
-    numInstances: 1
+    plan: free
     healthCheckPath: /api/health
-    disk:
-      name: proof-puzzle-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: DB_PATH
         value: /data/proof-puzzle.db

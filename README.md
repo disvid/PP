@@ -92,7 +92,7 @@ docker build -f backend/Dockerfile -t proof-puzzle-backend .
 docker run -p 3000:3000 -e FRONTEND_URL=https://your-app.vercel.app -v proof-puzzle-data:/data proof-puzzle-backend
 ```
 
-The image uses `node:24-alpine` and the built-in mock engine. Keep `/data` on a volume, or scores and accounts vanish with the container. Run a single instance: battles and the matchmaking queue live in memory.
+The image uses `node:24-alpine` and the built-in mock engine. Keep `/data` on a volume if you want scores and accounts to survive restarts (the free Render plan has no volume, so they do not). Run a single instance: battles and the matchmaking queue live in memory.
 
 **Frontend** (`frontend/`): set `VITE_API_URL` to the backend's public URL (`.env.production`, or the Vercel dashboard, which takes precedence) and deploy with `npm run build`. `vercel.json` rewrites every path to `index.html` so React Router routes like `/game` survive a refresh. Without `VITE_API_URL` (local development) requests stay on the page's origin and Vite proxies `/api` and `/socket.io` to `localhost:3000` (`VITE_DEV_API` overrides).
 
@@ -100,7 +100,7 @@ The image uses `node:24-alpine` and the built-in mock engine. Keep `/data` on a 
 
 ### Deploy checklist
 
-1. **Backend**: on Render, choose New > Blueprint and pick this repository: `render.yaml` sets up the Docker build (repository root as context), one instance, a 1 GB disk at `/data` and the health check, and asks for `FRONTEND_URL` (enter the Vercel URL from step 2, or a placeholder and fix it later). The disk needs a paid plan; on a free instance accounts and scores vanish on every restart. Other Docker hosts: `docker build -f backend/Dockerfile .` with a persistent volume at `/data` and a single instance. Note the public URL, e.g. `https://proof-puzzle-api.onrender.com`.
+1. **Backend (free)**: on Render, New > Blueprint and pick this repository. `render.yaml` uses the **free** plan (no card needed): Docker build from the repository root, the health check, and a prompt for `FRONTEND_URL`. If the Blueprint page still asks for payment details, skip it and create the service by hand instead: New > **Web Service** > this repository > Language **Docker** > Instance Type **Free**; under Advanced set Dockerfile Path `backend/Dockerfile` and Docker Build Context Directory `.` (the repository root), Health Check Path `/api/health`, and the environment variable `FRONTEND_URL`. Note the public URL, e.g. `https://proof-puzzle-api.onrender.com`. **Free means no disk**: accounts and scores are wiped when the service restarts, which includes waking up after its ~15 minute idle sleep (the first request then takes about a minute). To keep data you need a paid disk or an external database (Turso and Neon have free tiers, but the SQLite code would need porting).
 2. **Frontend**: import this repository into Vercel, set **Root Directory** to `frontend`, add the environment variable `VITE_API_URL` = the backend URL from step 1, and deploy. Note the site URL, e.g. `https://proof-puzzle.vercel.app`.
 3. **Connect them**: set `FRONTEND_URL` on the backend to the Vercel URL from step 2 and redeploy the backend (without it, browsers are not blocked, but production should list its origin).
 4. **Smoke test**: open the Vercel site, sign in with an alias, solve Level 1, open `/leaderboard`, refresh on `/game` (the Vercel rewrite should keep it working), and start a battle from two browsers.
