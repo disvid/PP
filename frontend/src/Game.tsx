@@ -419,7 +419,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
       </div>
 
       <div className="grid items-start gap-9 md:grid-cols-[1.15fr_1fr]">
-        <section className="panel-heavy p-4 md:-ml-2">
+        <section className="panel-heavy p-4">
           <ProofEditor
             value={code}
             resetKey={key}
@@ -468,7 +468,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
           )}
         </section>
 
-        <section className="panel shadow-aqua relative flex flex-col items-center gap-5 p-5 md:mt-10 md:rotate-[0.6deg]" data-testid="board-area">
+        <section className="panel shadow-aqua relative flex flex-col items-center gap-5 p-5" data-testid="board-area">
           <div className="text-center">
             <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">
               Current{boards.length > 1 ? ` · step ${viewIdx}/${boards.length - 1}` : ''}

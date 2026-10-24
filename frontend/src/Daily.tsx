@@ -84,7 +84,6 @@ function DailyView({ info, store }: { info: DailyInfo; store: GameStore }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-3xl font-extrabold uppercase tracking-tight">Daily Theorem #{info.number}</h2>
-            <p className="font-mono text-xs font-bold">{info.date} (UTC) · one valid proof per day, no retries · identical for everyone</p>
           </div>
           {completion ? (
             <div className="flex flex-wrap items-center gap-3">
