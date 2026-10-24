@@ -12,4 +12,4 @@ services:
         value: /data/proof-puzzle.db
       # the Vercel site's address, e.g. https://proof-puzzle.vercel.app (asked for when the Blueprint is created)
       - key: FRONTEND_URL
-        value: pp-v2byilefl-dishika-s-projects.vercel.app
+        value: https://pp-drab-one.vercel.app
