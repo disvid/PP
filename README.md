@@ -81,7 +81,7 @@ Neo-brutalism "math hacker": graph-paper background, stark ink, 2-5 px black bor
 
 ## How to Play
 
-`HowToPlay.tsx`: a five-step guide (goal, the three commands with before/after boards, helpers, timer and score, tools and modes) with Back / Next and a final "Play!" that goes to the game. It opens by itself every time a player signs in, and the "? How to Play" button in the top bar reopens it from any page. Esc, ✕ and the arrow keys work too.
+`HowToPlay.tsx`: a five-step guide (goal, the three commands with before/after boards, helpers, timer and score, tools and modes) with Back / Next. It is an overlay driven by one piece of state (`isHowToPlayOpen` in `App.tsx`), not a route: it opens right after every sign-in and from the "? How to Play" button in the top bar on any page, and Esc, the X and the final "Play!" all just close it. Nothing underneath is navigated away from or unmounted, so a battle in progress (and its Socket.IO connection) or a half-written daily proof is untouched.
 
 ## Deployment
 

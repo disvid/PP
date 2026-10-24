@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
 import BoardView from './BoardView'
 import { parseGrid } from './data/levels'
 
@@ -108,12 +107,7 @@ paintTwo(0, 3, 3, 3)`}</pre>
   },
 ]
 
-interface ModalProps {
-  onClose: () => void
-  onPlay: () => void
-}
-
-function HowToPlayModal({ onClose, onPlay }: ModalProps) {
+function HowToPlayModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0)
   const last = step === STEPS.length - 1
 
@@ -181,7 +175,7 @@ function HowToPlayModal({ onClose, onPlay }: ModalProps) {
               </button>
             )}
             {last ? (
-              <button onClick={onPlay} className="btn-neon px-6 py-2 text-sm" data-testid="howto-play">
+              <button onClick={onClose} className="btn-neon px-6 py-2 text-sm" data-testid="howto-play">
                 Play!
               </button>
             ) : (
@@ -197,46 +191,25 @@ function HowToPlayModal({ onClose, onPlay }: ModalProps) {
 }
 
 interface Props {
-  player: string
-  /** the app opens the guide right after sign-in */
-  autoOpen: boolean
-  onAutoClose: () => void
+  /** `isHowToPlayOpen`, owned by the app (see App.tsx) */
+  open: boolean
+  onOpen: () => void
+  onClose: () => void
 }
 
 /**
- * The "How to Play" button for the top bar plus its modal. The guide opens by itself every time a player signs in,
- * and the button reopens it from any page whenever they want the rules again.
+ * The "How to Play" button for the top bar plus its overlay. The overlay is plain state, not a route: opening or
+ * closing it never navigates, so whatever is underneath (a battle in progress with its socket, today's daily, a
+ * half-written proof) keeps running. "Play!" simply closes it.
  */
-export default function HowToPlayHost({ autoOpen, onAutoClose }: Props) {
-  const navigate = useNavigate()
-  const [manual, setManual] = useState(false)
-  const open = autoOpen || manual
-
-  const close = () => {
-    setManual(false)
-    onAutoClose()
-  }
-
+export default function HowToPlay({ open, onOpen, onClose }: Props) {
   return (
     <>
-      <button onClick={() => setManual(true)} data-testid="nav-howto" className="btn-magenta px-3 py-1 text-sm">
+      <button onClick={onOpen} data-testid="nav-howto" className="btn-magenta px-3 py-1 text-sm">
         ? How to Play
       </button>
       {/* in a portal, so no styled ancestor can become the containing block of the fixed overlay */}
-      {createPortal(
-        <AnimatePresence>
-          {open && (
-            <HowToPlayModal
-              onClose={close}
-              onPlay={() => {
-                close()
-                navigate('/game')
-              }}
-            />
-          )}
-        </AnimatePresence>,
-        document.body,
-      )}
+      {createPortal(<AnimatePresence>{open && <HowToPlayModal onClose={onClose} />}</AnimatePresence>, document.body)}
     </>
   )
 }

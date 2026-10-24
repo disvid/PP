@@ -177,22 +177,27 @@ export default function BattlePage() {
         </section>
 
         <section className="panel shadow-magenta flex flex-col items-center gap-5 p-5 md:mt-10 md:rotate-[0.6deg]">
-          <div className="text-center">
-            <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">You</p>
-            {myBoard && <BoardView board={myBoard} errorCells={myError?.cells} testPrefix="me" />}
-          </div>
-          <div className="text-center" data-testid="opponent-panel">
-            <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">{battle.opponent} (live)</p>
-            {oppBoard && <BoardView board={oppBoard} size="sm" testPrefix="opp" />}
-            <p className="mt-2 font-mono text-xs font-medium" data-testid="opponent-info">
-              {opp
-                ? `${opp.compiles} compile${opp.compiles === 1 ? '' : 's'} · ${opp.lines} lines · ${opp.solved ? 'solved!' : opp.error ? 'last run had an error' : 'last run compiled'}`
-                : "hasn't compiled a thing yet"}
-            </p>
-          </div>
-          <div className="text-center">
+          {/* the goal comes first, at the very top... */}
+          <div className="flex flex-col items-center text-center" data-testid="target-panel">
             <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">Target</p>
-            {level.targetState && <BoardView board={level.targetState} size="sm" testPrefix="tgt" />}
+            {level.targetState && <BoardView board={level.targetState} size="md" testPrefix="tgt" />}
+          </div>
+          {/* ...then you and your opponent next to each other, at the same size so the race is easy to read */}
+          <div className="flex flex-row flex-wrap justify-center gap-4" data-testid="boards-row">
+            <div className="flex flex-col items-center text-center" data-testid="my-panel">
+              <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">You</p>
+              {myBoard && <BoardView board={myBoard} size="md" errorCells={myError?.cells} testPrefix="me" />}
+            </div>
+            <div className="flex flex-col items-center text-center" data-testid="opponent-panel">
+              <p className="mb-3 inline-block bg-ink px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">{battle.opponent} (live)</p>
+              {oppBoard && <BoardView board={oppBoard} size="md" testPrefix="opp" />}
+              {/* w-0 + min-w-full: the text wraps to the width of the board instead of widening the column */}
+              <p className="mt-2 w-0 min-w-full font-mono text-xs font-medium" data-testid="opponent-info">
+                {opp
+                  ? `${opp.compiles} compile${opp.compiles === 1 ? '' : 's'} · ${opp.lines} lines · ${opp.solved ? 'solved!' : opp.error ? 'last run had an error' : 'last run compiled'}`
+                  : "hasn't compiled a thing yet"}
+              </p>
+            </div>
           </div>
         </section>
       </div>

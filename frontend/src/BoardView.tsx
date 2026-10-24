@@ -20,6 +20,9 @@ export interface Flash {
   color?: Color
 }
 
+/** lg: the board you play on; md: boards shown side by side (battles); sm: small reference boards */
+export type BoardSize = 'lg' | 'md' | 'sm'
+
 interface Props {
   board: Board
   /**
@@ -28,7 +31,7 @@ interface Props {
    */
   ids?: number[][]
   errorCells?: [number, number][]
-  size?: 'lg' | 'sm'
+  size?: BoardSize
   /** translucent preview of blocks that a hovered line would change */
   ghost?: { x: number; y: number; after: Block }[]
   /** briefly highlighted cells (hints) */
@@ -40,14 +43,14 @@ interface Props {
 }
 
 /** The direction arrow. Its angle accumulates, so turning from "left" back to "up" keeps spinning clockwise. */
-function Arrow({ rot, size, animated = true }: { rot: number; size: 'lg' | 'sm'; animated?: boolean }) {
+function Arrow({ rot, size, animated = true }: { rot: number; size: BoardSize; animated?: boolean }) {
   const st = useRef({ rot, angle: rot * 90 })
   if (st.current.rot !== rot) {
     const d = (rot - st.current.rot + 4) % 4
     st.current.angle += d === 3 ? -90 : d * 90
     st.current.rot = rot
   }
-  const dims = size === 'lg' ? 'border-x-[9px] border-b-[16px]' : 'border-x-[4px] border-b-[8px]'
+  const dims = { lg: 'border-x-[9px] border-b-[16px]', md: 'border-x-[7px] border-b-[13px]', sm: 'border-x-[4px] border-b-[8px]' }[size]
   return (
     <motion.div
       data-testid="arrow"
@@ -63,7 +66,7 @@ interface CellProps {
   block: Block
   x: number
   y: number
-  size: 'lg' | 'sm'
+  size: BoardSize
   isErr: boolean
   ghost?: Block
   flashed: boolean
@@ -83,7 +86,7 @@ function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClic
     void pulse.start({ scale: [1, 1.24, 1], transition: { duration: 0.45, ease: 'easeOut' } })
   }, [block.color, pulse])
 
-  const dim = size === 'lg' ? 'h-16 w-16' : 'h-8 w-8'
+  const dim = { lg: 'h-16 w-16', md: 'h-12 w-12', sm: 'h-8 w-8' }[size]
   return (
     <motion.div
       layout={glide}
@@ -102,7 +105,7 @@ function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClic
           initial={false}
           animate={{ backgroundColor: HEX[block.color] }}
           transition={{ duration: 0.3 }}
-          className={`tile ${size === 'sm' ? 'tile-sm' : ''} relative flex h-full w-full items-center justify-center ${
+          className={`tile ${size === 'sm' ? 'tile-sm' : size === 'md' ? 'tile-md' : ''} relative flex h-full w-full items-center justify-center ${
             isErr ? 'block-error' : ''
           } ${flashed ? 'animate-pulse tile-flash' : ''}`}
         >
@@ -137,7 +140,9 @@ export default function BoardView({ board, ids, errorCells = [], size = 'lg', gh
     .sort((a, b) => a.id - b.id) // stable DOM order, so a moved block keeps its element
   return (
     <div
-      className={`inline-grid bg-card ${size === 'lg' ? 'gap-2 border-4 p-3 shadow-[6px_6px_0_#0a0a0a]' : 'gap-1 border-[3px] p-1.5 shadow-[3px_3px_0_#0a0a0a]'} border-ink`}
+      className={`inline-grid bg-card border-ink ${
+        { lg: 'gap-2 border-4 p-3 shadow-[6px_6px_0_#0a0a0a]', md: 'gap-1.5 border-4 p-2 shadow-[5px_5px_0_#0a0a0a]', sm: 'gap-1 border-[3px] p-1.5 shadow-[3px_3px_0_#0a0a0a]' }[size]
+      }`}
       style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
     >
       {cells.map(({ block, x, y, id }) => (

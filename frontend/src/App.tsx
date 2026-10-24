@@ -20,8 +20,8 @@ import type { Level } from './data/levels'
 export default function App() {
   const [player, setPlayer] = useState<string | null>(null)
   const [authReady, setAuthReady] = useState(false)
-  // true from the moment someone signs in until they close the rules
-  const [guideOpen, setGuideOpen] = useState(false)
+  // the How to Play overlay: opened by the top-bar button and right after signing in, closed by Play! / Esc / the X
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false)
 
   // game progress kept above the Game route, because leaving the route unmounts the Game
   const [levelIdx, setLevelIdx] = useState(0)
@@ -54,14 +54,19 @@ export default function App() {
           <LoginRoute
             onLogin={(name) => {
               setPlayer(name)
-              setGuideOpen(true) // the rules pop up right after signing in
+              setIsHowToPlayOpen(true) // the rules pop up right after signing in
             }}
           />
         }
       />
       <Route
         element={
-          <RequireAuth player={player} onSignOut={() => setPlayer(null)} guideOpen={guideOpen} onGuideClose={() => setGuideOpen(false)} />
+          <RequireAuth
+            player={player}
+            onSignOut={() => setPlayer(null)}
+            isHowToPlayOpen={isHowToPlayOpen}
+            setIsHowToPlayOpen={setIsHowToPlayOpen}
+          />
         }
       >
         <Route path="/game" element={<Game store={store} />} />
@@ -103,11 +108,11 @@ function LoginRoute({ onLogin }: { onLogin: (name: string) => void }) {
 interface AuthProps {
   player: string | null
   onSignOut: () => void
-  guideOpen: boolean
-  onGuideClose: () => void
+  isHowToPlayOpen: boolean
+  setIsHowToPlayOpen: (open: boolean) => void
 }
 
-function RequireAuth({ player, onSignOut, guideOpen, onGuideClose }: AuthProps) {
+function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }: AuthProps) {
   const location = useLocation()
   const navigate = useNavigate()
   if (!player) return <Navigate to="/" replace state={{ from: location.pathname + location.search }} />
@@ -128,7 +133,7 @@ function RequireAuth({ player, onSignOut, guideOpen, onGuideClose }: AuthProps) 
           Proof Puzzle
         </h1>
         <nav className="flex flex-wrap items-center gap-2.5">
-          <HowToPlay player={player} autoOpen={guideOpen} onAutoClose={onGuideClose} />
+          <HowToPlay open={isHowToPlayOpen} onOpen={() => setIsHowToPlayOpen(true)} onClose={() => setIsHowToPlayOpen(false)} />
           <NavLink to="/game" className={link} data-testid="nav-game">Game</NavLink>
           <NavLink to="/daily" className={link} data-testid="nav-daily">Daily</NavLink>
           <NavLink to="/battle" className={link} data-testid="nav-battle">Battle</NavLink>
