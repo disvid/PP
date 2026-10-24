@@ -67,7 +67,7 @@ export default function Builder({ onPlay }: Props) {
 
   const field = ' btn-paper px-2 py-1 text-sm'
   return (
-    <section className="panel-heavy mx-auto max-w-4xl rotate-[0.3deg] p-6" data-testid="builder">
+    <section className="panel-heavy w-full rotate-[0.3deg] p-6" data-testid="builder">
       <h2 className="mb-2 inline-block -rotate-1 border-4 border-ink bg-abyss px-3 py-1 text-2xl font-extrabold uppercase tracking-tight text-neon">Level Builder</h2>
       <p className="mb-4 font-mono text-xs font-medium">Click a block to change its color, shift-click to add or turn an arrow.</p>
       <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">

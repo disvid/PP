@@ -140,7 +140,7 @@ export default function BattlePage() {
           </span>
         </p>
       </div>
-      <p className="mb-5 max-w-3xl border-l-8 border-magenta pl-4 text-base font-medium leading-snug">{level.description}</p>
+      <p className="mb-5 max-w-5xl border-l-8 border-magenta pl-4 text-base font-medium leading-snug">{level.description}</p>
 
       {over && (
         <div className={`panel mb-5 -rotate-1 p-4 ${over.youWon ? 'panel-neon' : 'panel-magenta'}`} data-testid="battle-over">

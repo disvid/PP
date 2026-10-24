@@ -138,7 +138,7 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
     `btn px-3 py-1 text-sm ${isActive ? 'btn-neon -translate-y-0.5' : 'btn-paper'}`
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-12 pt-6">
+    <div className="w-full px-4 pb-12 pt-6 sm:px-8 xl:px-12">
       <header className="panel-ink mb-8 grid items-center gap-x-4 gap-y-3 px-5 py-3 md:grid-cols-[1fr_auto_1fr]">
         {/* left: logo plus the two icon shortcuts */}
         <div className="flex flex-wrap items-center gap-3">

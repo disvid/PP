@@ -410,7 +410,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
         </div>
       </div>
 
-      <p className="mb-5 max-w-3xl border-l-8 border-magenta pl-4 text-base font-medium leading-snug">{level.description}</p>
+      <p className="mb-5 max-w-5xl border-l-8 border-magenta pl-4 text-base font-medium leading-snug">{level.description}</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-3" data-testid="hud">
         <span className="border-4 border-ink bg-abyss px-3 py-1 font-mono text-xl font-medium text-neon shadow-[4px_4px_0_#e4007c]" data-testid="timer">⏱ {fmt(elapsed)}</span>

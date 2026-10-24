@@ -62,9 +62,6 @@ export default function Login({ onLogin }: Props) {
         <p data-testid="tagline" className="mt-4 text-xl font-extrabold uppercase tracking-tight text-magenta dark:text-neon">
           Show the world how you move it
         </p>
-        <p className="mt-4 max-w-sm text-lg font-semibold leading-snug">
-          Shove colored blocks around with tiny programs. Fewer lines, faster hands, louder bragging rights.
-        </p>
       </div>
 
       {saved && (
