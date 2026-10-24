@@ -15,6 +15,10 @@ const fail = (id: number, msg: string) => {
   console.log(`  FAIL level ${id}: ${msg}`);
 };
 
+if (LEVELS.length !== 67) {
+  failures++;
+  console.log(`  FAIL: expected exactly 67 levels, found ${LEVELS.length}`);
+}
 console.log("id  par  optimal  lower-bound  cmds  hint solver");
 LEVELS.forEach((lv, i) => {
   if (lv.id !== i + 1) fail(lv.id, "ids must be 1..N in order");

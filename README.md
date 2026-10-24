@@ -1,6 +1,6 @@
 # Proof Puzzle
 
-Write move scripts to turn the board into the target. 23 levels in five phases (basics, combinations, macros, advanced, property targets). Levels live in `frontend/src/data/levels.ts`, shared by the UI and the backend.
+Write move scripts to turn the board into the target. 67 levels: 23 hand-designed ones in five phases (basics, combinations, macros, advanced, property targets) followed by 44 procedurally generated scrambles that grow from 3x3 to 5x5 and from 3-move to 11-move proofs. Levels live in `frontend/src/data/levels.ts`, shared by the UI and the backend.
 
 ## Run
 
@@ -32,14 +32,14 @@ def name(a, b, ...) := cmd; cmd   -- helper macro
 ## Checking the levels
 
 ```bash
-cd backend && npm run verify   # reference solution for each level fits par; macro levels are impossible without a helper
+cd backend && npm run verify   # every level has a reference proof within par; levels 1-23 are proven optimal
 ```
 
 ## Scoring, leaderboards, multiplayer
 
 Routes: `/` login, then `/game`, `/builder`, `/leaderboard` (all but `/` need a signed-in player). Each page is its own route, so the Game is unmounted, not hidden, on the builder and leaderboard; leaving it pauses the level clock, and the code and solved levels are kept. A level is locked until "Start Level" is clicked, and the score is only shown after the level is solved.
 
-Login is username-only: entering an existing name signs that player back in, a new name registers it (`POST /api/login`). There are no passwords, so anyone who knows a name can sign in as that player. The token lives in localStorage.
+Sign-in is **username + password**. One endpoint, `POST /api/login`: a known username must give its password (bcrypt hash in the `users.passwordHash` column); an unknown username is registered with the password given (8-72 characters). The server answers with a signed **JWT** (30 days, HS256) that the browser keeps in `localStorage` and sends as `Authorization: Bearer ...` (also for Socket.IO); the raw username is never trusted. Eight wrong guesses for one username from one IP block further attempts for ten minutes. Accounts that predate passwords have no hash yet, so the first sign-in with a password claims them. Set `JWT_SECRET` in production: without it a random key is used, which signs everybody out on every restart. Passwords are hashed with `bcryptjs` (the bcrypt algorithm, in pure JS so Docker/Render need no native build).
 
 Data is in SQLite (`node:sqlite`, file `backend/data/proof-puzzle.db`, override with `DB_PATH`).
 
@@ -53,7 +53,8 @@ Data is in SQLite (`node:sqlite`, file `backend/data/proof-puzzle.db`, override 
 
 | Endpoint | Purpose |
 | --- | --- |
-| `POST /api/login`, `GET /api/me`, `POST /api/friends` | sign in / register, current player, friends (Bearer token) |
+| `POST /api/login`, `GET /api/me`, `POST /api/friends` | sign in or register (returns a JWT), current player, friends (Bearer JWT) |
+| `GET /api/daily` | today's generated puzzle |
 | `GET /api/leaderboard/global`, `/friends` (`?level=`) | ranked totals; friends = you + people you added |
 | `POST /api/sessions/start`, `/pause` | start/resume and pause the server clock for a level (needed for hints and scores) |
 | `POST /api/evaluate` | run a proof, score it when signed in |
@@ -70,8 +71,8 @@ Property targets (levels 21-23, and the builder's "satisfy a theorem") are check
 
 ## Battles, Daily Theorem, sound
 
-- **`/battle`**: Socket.IO matchmaking queue. Two queued players get the same random puzzle (levels 5-23) and a 3 s countdown. Every "Run Proof" is compiled by the server, which sends the opponent only the resulting board (shown as a small read-only grid), never the code. First correct proof wins; leaving the page forfeits. The queue and battles live in server memory (one server process, nothing is persisted). `backend/battle-bot.ts` is a test opponent: `npx tsx battle-bot.ts erin partial|solve|idle`.
-- **`/daily`**: one level per UTC day (seeded from the date with date-fns, same for everyone, levels 6-23). The best result per day is kept in `localStorage` (`pp_daily`). "Share" copies the result as emoji rows with `navigator.clipboard.writeText`; if the browser refuses, the text is shown to copy by hand.
+- **`/battle`**: Socket.IO matchmaking queue. Two queued players get a **brand-new generated puzzle** (3x3, made from a fresh random seed for that match, unranked) and start immediately: no countdown, no clock. Every "Run Proof" is compiled by the server, which sends the opponent only the resulting board (a small read-only grid), never the code. When a proof solves the puzzle the client emits `board_solved`; the server re-verifies it and the first verified claim broadcasts `battle_over` (winner and loser); leaving the page forfeits. The queue and battles live in server memory (one process, nothing persisted). `backend/battle-bot.ts` is a test opponent: `npx tsx battle-bot.ts name partial|solve|idle|peek` (`peek` prints a shortest proof so you can win by hand).
+- **`/daily`**: one procedurally generated puzzle per UTC day. `GET /api/daily` seeds `puzzleGenerator.ts` with the date, so every player (and every server instance) gets the same puzzle, delivered like a custom level. The best result per day is kept in `localStorage` (`pp_daily`). "Share" copies the result as emoji rows with `navigator.clipboard.writeText`; if the browser refuses, the text is shown to copy by hand.
 - **Sound** (`src/soundUtils.ts`, Web Audio, no samples): `swap` is a low A-major chord, `rotate` a short tick, `paint` a chime whose pitch depends on the color (C D E G A pentatonic). It plays as the step index moves: automatic playback after a run, "Replay with sound", and the timeline slider. 🔊/🔇 toggles it (remembered).
 
 ## Look and feel
@@ -103,4 +104,10 @@ The image uses `node:24-alpine` and the built-in mock engine. Keep `/data` on a 
 1. **Backend (free)**: on Render, New > Blueprint and pick this repository. `render.yaml` uses the **free** plan (no card needed): Docker build from the repository root, the health check, and a prompt for `FRONTEND_URL`. If the Blueprint page still asks for payment details, skip it and create the service by hand instead: New > **Web Service** > this repository > Language **Docker** > Instance Type **Free**; under Advanced set Dockerfile Path `backend/Dockerfile` and Docker Build Context Directory `.` (the repository root), Health Check Path `/api/health`, and the environment variable `FRONTEND_URL`. Note the public URL, e.g. `https://proof-puzzle-api.onrender.com`. **Free means no disk**: accounts and scores are wiped when the service restarts, which includes waking up after its ~15 minute idle sleep (the first request then takes about a minute). To keep data you need a paid disk or an external database (Turso and Neon have free tiers, but the SQLite code would need porting).
 2. **Frontend**: import this repository into Vercel, set **Root Directory** to `frontend`, add the environment variable `VITE_API_URL` = the backend URL from step 1, and deploy. Note the site URL, e.g. `https://proof-puzzle.vercel.app`.
 3. **Connect them**: set `FRONTEND_URL` on the backend to the Vercel URL from step 2 and redeploy the backend (without it, browsers are not blocked, but production should list its origin).
-4. **Smoke test**: open the Vercel site, sign in with an alias, solve Level 1, open `/leaderboard`, refresh on `/game` (the Vercel rewrite should keep it working), and start a battle from two browsers.
+4. **Smoke test**: open the Vercel site, register with a username and password, solve Level 1, open `/leaderboard`, refresh on `/game` (the Vercel rewrite should keep it working), and start a battle from two browsers.
+
+## Generated puzzles and levels 24-67
+
+`backend/puzzleGenerator.ts` makes a puzzle by taking a seeded random 3x3 board (with a few arrow blocks), applying a random sequence of 3-7 valid transformations (swap, rotate, paint) that each really change the board, and keeping the result as the target. A breadth-first search then finds the shortest single-block proof, whose length is the puzzle's `optimalLines` (par is that plus two). Because it is seeded, the same seed always gives the same puzzle: the Daily Theorem seeds it with the date, battles with a random seed. For these puzzles the optimum is the shortest *single-block* proof, so a clever helper macro can only beat it (and still scores full optimality); levels 1-23 are the ones whose optimum includes helpers and is proven.
+
+Levels 24-67 come from `npm run generate:levels` (`backend/scripts/generate-levels.ts`): 12 3x3 levels, 16 4x4 levels and 16 5x5 levels, each tier sorted by the length of its shortest proof (3 up to 11). The output is checked in as `frontend/src/data/generatedLevels.ts` (boards, par, optimum) and `backend/generatedSolutions.ts` (one reference proof per level, kept server-side); `levels.ts` turns the rows into `Level`s, so the count is exactly 67.

@@ -8,20 +8,24 @@
     "build": "tsc && node scripts/write-entry.mjs",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.dev.json",
-    "verify": "tsx verify-levels.ts"
+    "verify": "tsx verify-levels.ts",
+    "generate:levels": "tsx scripts/generate-levels.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
     "socket.io": "^4.8.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.5",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",

@@ -1,25 +1,51 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Game from './Game'
 import type { GameStore, SolveInfo } from './Game'
-import { boardToEmoji, dailyLevel, dailyNumber, dateKey, isOptimal, loadDaily, saveDaily, shareText } from './dailyUtils'
+import { api } from './api'
+import { customToLevel, decodeCustom } from './data/levels'
+import { boardToEmoji, isOptimal, loadDaily, saveDaily, shareText } from './dailyUtils'
 import type { DailyRecord } from './dailyUtils'
 
-/** `/daily`: one puzzle per UTC day, the same for everyone. Completion lives in localStorage. */
+interface DailyInfo {
+  date: string
+  number: number
+  /** the generated puzzle as a base64url custom-level payload */
+  level: string
+}
+
+/**
+ * `/daily`: one procedurally generated puzzle per UTC day. The server seeds the generator with the date, so every
+ * player gets the exact same puzzle. Completion lives in localStorage.
+ */
 export default function Daily({ store }: { store: GameStore }) {
-  const today = useMemo(() => {
-    const now = new Date()
-    const date = dateKey(now)
-    return { date, number: dailyNumber(now), level: dailyLevel(date) }
+  const [info, setInfo] = useState<DailyInfo | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    api<DailyInfo>('/api/daily')
+      .then((r) => (r.ok ? setInfo(r.data) : setFailed(true)))
+      .catch(() => setFailed(true))
   }, [])
-  const [record, setRecord] = useState<DailyRecord | null>(() => loadDaily(today.date))
+
+  if (failed) {
+    return <p className="panel mx-auto max-w-md p-5 font-bold">Couldn&apos;t reach the server for today&apos;s theorem. Is the backend awake? Try again in a moment.</p>
+  }
+  if (!info) return <p className="font-mono text-lg font-bold">fetching today&apos;s theorem…</p>
+  return <DailyView info={info} store={store} />
+}
+
+function DailyView({ info, store }: { info: DailyInfo; store: GameStore }) {
+  // stable identity: the Game restarts its level whenever this object changes
+  const level = useMemo(() => customToLevel(decodeCustom(info.level)), [info.level])
+  const [record, setRecord] = useState<DailyRecord | null>(() => loadDaily(info.date))
   const [copy, setCopy] = useState<{ state: 'idle' | 'copied' | 'failed'; text: string }>({ state: 'idle', text: '' })
 
   const onSolved = (r: SolveInfo) =>
     setRecord(
       saveDaily({
-        date: today.date,
-        number: today.number,
-        levelId: today.level.id,
+        date: info.date,
+        number: info.number,
+        levelId: 0,
         lines: r.lines,
         optimalLines: r.optimalLines,
         elapsedMs: r.elapsedMs,
@@ -45,14 +71,14 @@ export default function Daily({ store }: { store: GameStore }) {
       <div className="panel panel-neon mb-8 -rotate-[0.5deg] p-5" data-testid="daily-banner">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-3xl font-extrabold uppercase tracking-tight">Daily Theorem #{today.number}</h2>
-            <p className="font-mono text-xs font-bold">{today.date} (UTC) · same puzzle for the whole planet</p>
+            <h2 className="text-3xl font-extrabold uppercase tracking-tight">Daily Theorem #{info.number}</h2>
+            <p className="font-mono text-xs font-bold">{info.date} (UTC) · generated fresh from today&apos;s date, identical for everyone</p>
           </div>
           {record ? (
             <div className="flex flex-wrap items-center gap-3">
               <span className="border-[3px] border-ink bg-aqua px-3 py-1 text-sm font-bold" data-testid="daily-done">
                 ✓ Solved in {record.lines} line{record.lines === 1 ? '' : 's'}
-                {isOptimal(record) ? ' · optimal!' : ` · optimal is ${record.optimalLines}`}
+                {isOptimal(record) ? ' · optimal!' : ` · best known: ${record.optimalLines}`}
               </span>
               <button data-testid="share" onClick={share} className="btn-ink px-4 py-2">
                 Share
@@ -68,12 +94,12 @@ export default function Daily({ store }: { store: GameStore }) {
         {copy.state === 'failed' && (
           <div className="mt-2" data-testid="share-status">
             <p className="text-sm font-bold">Your browser said no to the clipboard. Copy this by hand:</p>
-            <textarea readOnly rows={5} value={copy.text} className="mt-1 w-full bg-ink p-2 font-mono text-sm text-neon" onFocus={(e) => e.target.select()} />
+            <textarea readOnly rows={7} value={copy.text} className="mt-1 w-full bg-ink p-2 font-mono text-sm text-neon" onFocus={(e) => e.target.select()} />
           </div>
         )}
       </div>
 
-      <Game store={store} fixedLevel={today.level} onSolved={onSolved} />
+      <Game store={store} fixedLevel={level} onSolved={onSolved} />
     </div>
   )
 }

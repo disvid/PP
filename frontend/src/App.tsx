@@ -36,7 +36,7 @@ export default function App() {
     api<{ name: string }>('/api/me')
       .then((r) => {
         if (r.ok) setPlayer(r.data.name)
-        else session.clear() // stale token, e.g. the database was reset
+        else if (r.status === 401) session.clear() // expired, forged or orphaned token (e.g. the database was reset)
       })
       .catch(() => {})
       .finally(() => setAuthReady(true))

@@ -1,6 +1,8 @@
 // Single source of truth for levels. Imported by the React app and by the backend evaluator,
 // so keep this file dependency-free (types + data + tiny pure helpers only).
 
+import { GENERATED_LEVELS } from './generatedLevels'
+
 export type Color = 'blue' | 'green' | 'red' | 'yellow' | 'purple'
 export const COLORS: Color[] = ['blue', 'green', 'red', 'yellow', 'purple']
 
@@ -15,7 +17,7 @@ export interface Level {
   id: number
   title: string
   description: string
-  gridSize: 3 | 4
+  gridSize: 3 | 4 | 5
   initialState: Board
   /** Win by matching this board exactly (colors and arrow directions)... */
   targetState?: Board
@@ -129,7 +131,8 @@ const COORDS = 'Coordinates start at (0, 0) in the top-left corner; x grows to t
 const MACRO_TIP =
   'A helper is one line, can hold up to 4 swap/paint/rotate commands, and takes its coordinates as parameters.'
 
-export const LEVELS: Level[] = [
+/** Levels 1-23: designed by hand, each with a proven shortest proof (see backend/verify-levels.ts). */
+const HANDCRAFTED: Level[] = [
   // ---------------- Phase 1: the basics (3x3) ----------------
   {
     id: 1,
@@ -391,6 +394,24 @@ export const LEVELS: Level[] = [
     optimalLines: 2,
   },
 ]
+
+/**
+ * Levels 24-67: procedurally generated scrambles, sorted by difficulty (3x3, then 4x4, then 5x5, each tier with
+ * longer and longer shortest proofs). The loop only turns the generated rows into levels; the generation itself
+ * (and the search for each level's shortest proof) is backend/scripts/generate-levels.ts, whose output is checked in.
+ */
+const GENERATED: Level[] = GENERATED_LEVELS.map((g) => ({
+  id: g.id,
+  title: g.title,
+  description: g.description,
+  gridSize: g.size,
+  initialState: parseGrid(g.initial),
+  targetState: parseGrid(g.target),
+  parLimit: g.par,
+  optimalLines: g.optimal,
+}))
+
+export const LEVELS: Level[] = [...HANDCRAFTED, ...GENERATED]
 
 // ---- user-made levels (Level Builder) ---------------------------------------
 export interface CustomPayload {

@@ -5,10 +5,11 @@ interface Props {
   onLogin: (name: string) => void
 }
 
-/** Landing page. Accounts are alias-only: an existing alias signs back in, a new one is created. */
+/** Landing page. One form for both cases: a known username must give its password, an unknown one is registered with it. */
 export default function Login({ onLogin }: Props) {
   const [saved, setSaved] = useState<string | null>(null)
   const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -16,7 +17,7 @@ export default function Login({ onLogin }: Props) {
     if (!session.token()) return
     void api<{ name: string }>('/api/me').then((r) => {
       if (r.ok) setSaved(r.data.name)
-      else session.clear() // stale token (e.g. the server database was reset)
+      else if (r.status === 401) session.clear() // expired, forged or orphaned token; other errors may be a restarting server
     })
   }, [])
 
@@ -25,9 +26,9 @@ export default function Login({ onLogin }: Props) {
     setBusy(true)
     setError('')
     try {
-      // an existing alias signs that player back in; a new alias registers it
-      const r = await api<{ name: string; token: string; error?: string }>('/api/login', { name: name.trim() })
-      if (!r.ok) return setError(r.data.error ?? 'That alias bounced. Try another.')
+      // a known username must present its password; an unknown one is registered with the password given
+      const r = await api<{ name: string; token: string; error?: string }>('/api/login', { name: name.trim(), password })
+      if (!r.ok) return setError(r.data.error ?? 'That login bounced. Try again.')
       session.set(r.data.name, r.data.token)
       onLogin(r.data.name)
     } catch {
@@ -56,7 +57,7 @@ export default function Login({ onLogin }: Props) {
 
       <form onSubmit={join} className="panel-heavy flex rotate-1 flex-col gap-4 p-6">
         <label className="text-xl font-extrabold uppercase tracking-tight" htmlFor="username">
-          {saved ? 'Or become someone else' : 'Enter your alias to initialize.'}
+          {saved ? 'Or become someone else' : 'Enter your credentials to initialize.'}
         </label>
         <input
           id="username"
@@ -65,16 +66,28 @@ export default function Login({ onLogin }: Props) {
           autoComplete="off"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="lambda_wolf"
+          placeholder="username (lambda_wolf)"
           className="px-3 py-2 font-mono text-lg"
         />
-        <p className="font-mono text-xs">2-20 chars: letters, digits, _ or -. Brand-new alias? We&apos;ll mint it. Known alias? Welcome back.</p>
+        <input
+          id="password"
+          data-testid="password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="password (8+ characters)"
+          className="px-3 py-2 font-mono text-lg"
+        />
+        <p className="font-mono text-xs">
+          Username: 2-20 chars (letters, digits, _ or -). Password: 8-72 chars. New username? We&apos;ll create the account with this password. Known username? Prove it&apos;s you.
+        </p>
         {error && (
           <p className="border-[3px] border-ink bg-magenta px-3 py-2 text-sm font-bold text-white" data-testid="login-error">
             {error}
           </p>
         )}
-        <button type="submit" disabled={busy || name.trim().length < 2} className="btn-neon px-4 py-3 text-lg uppercase">
+        <button type="submit" disabled={busy || name.trim().length < 2 || password.length < 8} className="btn-neon px-4 py-3 text-lg uppercase">
           Initialize ▸
         </button>
       </form>

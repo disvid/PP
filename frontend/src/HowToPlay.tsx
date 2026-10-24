@@ -99,8 +99,8 @@ paintTwo(0, 3, 3, 3)`}</pre>
         <li><b>Ghost preview:</b> hover a line of code to see a see-through preview of what it would change.</li>
         <li><b>Hint:</b> flashes the next useful move on the board without writing the code for you.</li>
         <li><b>Time travel:</b> drag the slider under the board (or press Replay) to scrub through your proof. Every step makes a sound; 🔊 shushes it.</li>
-        <li><b>Daily:</b> one puzzle a day, the same for everyone, with a shareable result.</li>
-        <li><b>Battle:</b> race another player on the same puzzle and watch their board live.</li>
+        <li><b>Daily:</b> one freshly generated puzzle a day, the same for everyone, with a shareable result.</li>
+        <li><b>Battle:</b> race another player on a brand-new puzzle made just for the match, and watch their board live. No clock: first correct proof wins.</li>
         <li><b>Level Builder:</b> cook up your own level and share it with a link.</li>
         <li><b>Leaderboard:</b> compare points globally or with friends.</li>
       </ul>

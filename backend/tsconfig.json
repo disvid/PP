@@ -17,6 +17,7 @@
     "search-macros.ts",
     "battle-bot.ts",
     "solutions.ts",
+    "generatedSolutions.ts",
     "dist",
     "node_modules"
   ]

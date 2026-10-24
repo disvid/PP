@@ -13,3 +13,6 @@ services:
       # the Vercel site's address, e.g. https://proof-puzzle.vercel.app (asked for when the Blueprint is created)
       - key: FRONTEND_URL
         value: https://pp-drab-one.vercel.app
+      # signs session tokens; Render generates a random value once and keeps it across deploys
+      - key: JWT_SECRET
+        generateValue: true

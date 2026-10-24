@@ -2,7 +2,6 @@
 import { DatabaseSync } from "node:sqlite";
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import { LEVELS } from "../frontend/src/data/levels";
 import { computeScore } from "../frontend/src/data/scoring";
 import type { Score } from "../frontend/src/data/scoring";
@@ -18,7 +17,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    token TEXT NOT NULL UNIQUE,
+    passwordHash TEXT,
     created_at INTEGER NOT NULL
   );
   -- derived from frontend/src/data/levels.ts on every start
@@ -96,13 +95,39 @@ if ((db.prepare("PRAGMA user_version").get() as { user_version: number }).user_v
   db.exec("PRAGMA user_version = 2");
 }
 
+// Migration v3: password accounts. The old alias-only table stored a plaintext session token per user; it is rebuilt
+// without it and with a passwordHash column. Existing players keep their id (so scores and friends stay attached) and
+// get a NULL hash: the first sign-in with a password claims the account (see index.ts).
+if ((db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version < 3) {
+  const ucols = (db.prepare("PRAGMA table_info(users)").all() as { name: string }[]).map((c) => c.name);
+  if (ucols.includes("token") || !ucols.includes("passwordHash")) {
+    const keepHash = ucols.includes("passwordHash") ? "passwordHash" : "NULL";
+    db.exec("PRAGMA foreign_keys = OFF");
+    db.exec("BEGIN");
+    db.exec(`CREATE TABLE users_new (
+      id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      passwordHash TEXT,
+      created_at INTEGER NOT NULL
+    )`);
+    db.exec(`INSERT INTO users_new (id, name, passwordHash, created_at) SELECT id, name, ${keepHash}, created_at FROM users`);
+    db.exec("DROP TABLE users");
+    db.exec("ALTER TABLE users_new RENAME TO users");
+    db.exec("COMMIT");
+    db.exec("PRAGMA foreign_keys = ON");
+  }
+  db.exec("PRAGMA user_version = 3");
+}
+
 export interface User { id: number; name: string }
+export interface UserRow extends User { passwordHash: string | null }
 
 const q = {
-  userByToken: db.prepare("SELECT id, name FROM users WHERE token = ?"),
+  userById: db.prepare("SELECT id, name FROM users WHERE id = ?"),
   userByName: db.prepare("SELECT id, name FROM users WHERE name = ?"),
-  userRow: db.prepare("SELECT id, name, token FROM users WHERE name = ?"),
-  insertUser: db.prepare("INSERT INTO users (name, token, created_at) VALUES (?, ?, ?)"),
+  userRow: db.prepare("SELECT id, name, passwordHash FROM users WHERE name = ?"),
+  insertUser: db.prepare("INSERT INTO users (name, passwordHash, created_at) VALUES (?, ?, ?)"),
+  setHash: db.prepare("UPDATE users SET passwordHash = ? WHERE id = ?"),
   getSession: db.prepare("SELECT elapsed_ms, running_since, hints FROM play_sessions WHERE user_id = ? AND level_key = ?"),
   newSession: db.prepare("INSERT INTO play_sessions (user_id, level_key, elapsed_ms, running_since, hints) VALUES (?, ?, 0, ?, 0)"),
   resume: db.prepare("UPDATE play_sessions SET running_since = ? WHERE user_id = ? AND level_key = ? AND running_since IS NULL"),
@@ -121,21 +146,16 @@ const q = {
   putCustom: db.prepare("INSERT OR IGNORE INTO custom_levels (id, creator_id, title, payload, created_at) VALUES (?, ?, ?, ?, ?)"),
 };
 
-export const userByToken = (token: string) => q.userByToken.get(token) as User | undefined;
+export const userById = (id: number) => q.userById.get(id) as User | undefined;
 export const userByName = (name: string) => q.userByName.get(name) as User | undefined;
+export const userRowByName = (name: string) => q.userRow.get(name) as UserRow | undefined;
 
-/** Returns the user's token if the name exists (a returning player), otherwise registers the name. */
-export function loginOrCreate(name: string): { user: User; token: string; created: boolean } {
-  const existing = q.userRow.get(name) as (User & { token: string }) | undefined;
-  if (existing) return { user: { id: existing.id, name: existing.name }, token: existing.token, created: false };
-  return { ...createUser(name), created: true };
+export function insertUser(name: string, passwordHash: string): User {
+  const r = q.insertUser.run(name, passwordHash, Date.now());
+  return { id: Number(r.lastInsertRowid), name };
 }
 
-export function createUser(name: string): { user: User; token: string } {
-  const token = crypto.randomBytes(24).toString("hex");
-  const r = q.insertUser.run(name, token, Date.now());
-  return { user: { id: Number(r.lastInsertRowid), name }, token };
-}
+export const setPasswordHash = (id: number, passwordHash: string) => void q.setHash.run(passwordHash, id);
 
 interface SessionRow { elapsed_ms: number; running_since: number | null; hints: number }
 const elapsedOf = (s: SessionRow) => s.elapsed_ms + (s.running_since ? Date.now() - s.running_since : 0);

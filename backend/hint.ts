@@ -12,7 +12,7 @@ export interface Hint {
   remaining: number | null;
 }
 
-type Move = Omit<Op, "line">;
+export type Move = Omit<Op, "line">;
 
 const key = (b: Board) => b.map((r) => r.map((c) => c.color[0] + (c.rot ?? "-")).join("")).join("/");
 const apply = (b: Board, m: Move): Board | null => {
@@ -62,22 +62,34 @@ function usefulMoves(b: Board, t: Board): Move[] {
   return moves;
 }
 
-function bfs(start: Board, goal: (b: Board) => boolean, moves: (b: Board) => Move[], cap: number): { first: Move; length: number } | null {
+interface Node {
+  b: Board;
+  move?: Move;
+  parent?: Node;
+}
+
+/** Breadth-first search; returns the whole shortest move sequence, or null if none was found within `cap` states. */
+function bfs(start: Board, goal: (b: Board) => boolean, moves: (b: Board) => Move[], cap: number): Move[] | null {
   const seen = new Set([key(start)]);
-  let frontier: { b: Board; first?: Move }[] = [{ b: start }];
+  let frontier: Node[] = [{ b: start }];
   let nodes = 0;
-  for (let depth = 1; frontier.length; depth++) {
-    const next: typeof frontier = [];
-    for (const { b, first } of frontier)
-      for (const m of moves(b)) {
-        const nb = apply(b, m);
+  while (frontier.length) {
+    const next: Node[] = [];
+    for (const node of frontier)
+      for (const m of moves(node.b)) {
+        const nb = apply(node.b, m);
         if (!nb) continue;
         const k = key(nb);
         if (seen.has(k)) continue;
         seen.add(k);
-        if (goal(nb)) return { first: first ?? m, length: depth };
+        const child: Node = { b: nb, move: m, parent: node };
+        if (goal(nb)) {
+          const path: Move[] = [];
+          for (let n: Node | undefined = child; n?.move; n = n.parent) path.unshift(n.move);
+          return path;
+        }
         if (++nodes > cap) return null;
-        next.push({ b: nb, first: first ?? m });
+        next.push(child);
       }
     frontier = next;
   }
@@ -98,7 +110,7 @@ export function findHint(level: Level, board: Board): Hint | null {
   const t = level.targetState;
   const pruned = t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000) : null;
   const found = pruned ?? bfs(board, goal, allMoves, 250_000);
-  if (found) return toHint(found.first, found.length);
+  if (found) return toHint(found[0], found.length);
   // No short proof found: fall back to the single move that most reduces the distance.
   const score = (b: Board) => (level.property ? violations(b, level.property) : 0) + (t ? b.flat().reduce((s, c, i) => s + cost(c, t.flat()[i]), 0) : 0);
   let best: { m: Move; s: number } | null = null;
@@ -109,11 +121,18 @@ export function findHint(level: Level, board: Board): Hint | null {
   return best && best.s < score(board) ? toHint(best.m, null) : null;
 }
 
-/** Fewest single-block commands that solve the level from `board` (BFS), or null if the search gave up. */
-export function shortestSolution(level: Level, board: Board): number | null {
+/**
+ * A shortest sequence of single-block commands that solves the level from `board` (breadth-first search over moves
+ * that make progress, then over all moves), or null if the search gave up.
+ */
+export function solveSequence(level: Level, board: Board): Move[] | null {
   const goal = (b: Board) => isSolved(level, b);
-  if (goal(board)) return 0;
+  if (goal(board)) return [];
   const t = level.targetState;
-  const found = (t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000) : null) ?? bfs(board, goal, allMoves, 250_000);
-  return found ? found.length : null;
+  return (t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000) : null) ?? bfs(board, goal, allMoves, 250_000);
+}
+
+/** Fewest single-block commands that solve the level from `board`, or null if the search gave up. */
+export function shortestSolution(level: Level, board: Board): number | null {
+  return solveSequence(level, board)?.length ?? null;
 }

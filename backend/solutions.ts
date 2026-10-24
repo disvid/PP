@@ -1,11 +1,14 @@
 // Reference solutions, one per level, each exactly `optimalLines` long. Used by `npm run verify` (which proves them)
 // and by the battle test bot.
+import { GENERATED_SOLUTIONS } from "./generatedSolutions";
+
 export const j = (...lines: string[]) => lines.join("\n");
 const FOUR = "def four(a, b) := paint(a, a, red); paint(b, b, red); paint(a, b, red); paint(b, a, red)";
 const ROW = (col: string) => `def row(a, b, c, d, y${col === "col" ? ", col" : ""}) := paint(a, y, ${col}); paint(b, y, ${col}); paint(c, y, ${col}); paint(d, y, ${col})`;
 
 /** One reference solution per level, each exactly optimalLines long. */
-export const SOLUTIONS: Record<number, string> = {
+/** Levels 1-23: shortest proofs found by hand (helpers included). */
+const HAND_SOLUTIONS: Record<number, string> = {
   1: "paint(1, 1, green)",
   2: j("paint(0, 0, red)", "paint(2, 2, red)"),
   3: "swap(0, 0, 2, 2)",
@@ -62,4 +65,7 @@ export const SOLUTIONS: Record<number, string> = {
   22: j("swap(1, 1, 1, 0)", "swap(2, 2, 2, 0)"),
   23: j("paint(3, 0, yellow)", "paint(3, 1, yellow)"),
 };
+
+/** Levels 24-67: the shortest single-block proof from the generator (generatedSolutions.ts). */
+export const SOLUTIONS: Record<number, string> = { ...HAND_SOLUTIONS, ...GENERATED_SOLUTIONS };
 

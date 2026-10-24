@@ -1,28 +1,9 @@
-import { addMinutes, differenceInCalendarDays, format } from 'date-fns'
-import { LEVELS } from './data/levels'
-import type { Board, Color, Level } from './data/levels'
-
-/** Puzzle #1. */
-const EPOCH = new Date(2026, 0, 1)
-/** The tutorial levels are too short for a daily puzzle. */
-const POOL = LEVELS.filter((l) => l.id >= 6)
-
-/** A Date whose local fields show the current UTC calendar day, so every player gets the same puzzle on the same day. */
-const utc = (now: Date) => addMinutes(now, now.getTimezoneOffset())
-
-export const dateKey = (now = new Date()) => format(utc(now), 'yyyy-MM-dd')
-export const dailyNumber = (now = new Date()) => differenceInCalendarDays(utc(now), EPOCH) + 1
-
-/** Seeded pick: the same date string always maps to the same level. */
-export function dailyLevel(key: string): Level {
-  let h = 0x811c9dc5
-  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193) >>> 0
-  return POOL[h % POOL.length]
-}
+import type { Board, Color } from './data/levels'
 
 export interface DailyRecord {
   date: string
   number: number
+  /** 0: the daily puzzle is generated, not one of the numbered levels */
   levelId: number
   lines: number
   optimalLines: number
@@ -42,12 +23,17 @@ function readAll(): Record<string, DailyRecord> {
   }
 }
 
-export const loadDaily = (date: string): DailyRecord | null => readAll()[date] ?? null
+export const loadDaily = (date: string): DailyRecord | null => {
+  const r = readAll()[date]
+  // results saved before the daily puzzle was generated belong to a numbered level (levelId > 0), not to today's puzzle
+  return r && r.levelId === 0 ? r : null
+}
 
 /** Stores the result for the day, keeping the better one (fewer lines, then faster) if it was solved before. */
 export function saveDaily(rec: DailyRecord): DailyRecord {
   const all = readAll()
-  const prev = all[rec.date]
+  const stored = all[rec.date]
+  const prev = stored && stored.levelId === 0 ? stored : undefined // see loadDaily: older results are not today's puzzle
   const better = !prev || rec.lines < prev.lines || (rec.lines === prev.lines && (rec.elapsedMs ?? Infinity) < (prev.elapsedMs ?? Infinity))
   if (better) all[rec.date] = rec
   try {
