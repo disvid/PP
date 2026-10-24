@@ -136,7 +136,7 @@ export default function BattlePage() {
         <p className="text-2xl font-extrabold uppercase tracking-tight">
           Battle vs <span className="bg-magenta px-2 text-white" data-testid="opponent-name">{battle.opponent}</span>
           <span className="ml-3 font-mono text-xs font-bold normal-case tracking-normal">
-            {level.gridSize}x{level.gridSize} · par {level.parLimit} lines · unranked
+            {level.gridSize}x{level.gridSize} · max {level.parLimit} lines · unranked
           </span>
         </p>
       </div>

@@ -102,7 +102,7 @@ function DailyView({ info, store }: { info: DailyInfo; store: GameStore }) {
               )}
             </div>
           ) : (
-            <span className="border-[3px] border-ink bg-card px-3 py-1 text-sm font-bold" data-testid="daily-todo">Unsolved. One shot at a valid proof.</span>
+            <span className="border-[3px] border-ink bg-card px-3 py-1 text-sm font-bold text-ink" data-testid="daily-todo">Unsolved. One shot at a valid proof.</span>
           )}
         </div>
 

@@ -390,7 +390,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
         <div>
           <p className="text-2xl font-extrabold uppercase tracking-tight">
             {level.custom ? `Custom: ${level.title}` : `Level ${level.id}: ${level.title}`}
-            <span className="ml-3 border-2 border-ink bg-neon px-2 py-0.5 font-mono text-xs font-bold normal-case tracking-normal">par {level.parLimit}</span>
+            <span className="ml-3 border-2 border-ink bg-neon px-2 py-0.5 font-mono text-xs font-bold normal-case tracking-normal">Max lines: {level.parLimit}</span>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -431,7 +431,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
             onHover={onHover}
             onMouseLine={onMouseLine}
           />
-          <p className="mt-3 font-mono text-xs font-medium">swap(x1, y1, x2, y2) · paint(x, y, color) · rotate(x, y) · def name(a, b) := cmd; cmd</p>
+          <p className="mt-3 font-mono text-xs font-medium">swap(x1, y1, x2, y2) · paint(x, y, color) · rotate(x, y) · def name(a, b)</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button onClick={run} disabled={running || !started || !!locked} className="btn-neon px-5 py-2">
               Run Proof
@@ -527,7 +527,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
               ) : (
                 <>
                   <p className="max-w-xs text-sm font-semibold">
-                    Par {level.parLimit} lines. The clock only ticks once you hit start, and the editor stays locked until then. Breathe first.
+                    Max {level.parLimit} lines. The clock only ticks once you hit start, and the editor stays locked until then. Breathe first.
                   </p>
                   <button data-testid="start-level" onClick={startLevel} className="btn-neon px-8 py-3 text-xl uppercase">
                     {clock.base > 0 ? 'Resume Level' : 'Start Level'}

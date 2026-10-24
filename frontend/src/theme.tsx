@@ -60,9 +60,10 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       onClick={toggleTheme}
       aria-pressed={dark}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className={`btn-paper px-3 py-1 text-sm ${className}`}
+      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`btn-paper flex h-8 w-8 items-center justify-center p-0 text-base leading-none ${className}`}
     >
-      {dark ? '☀ Light' : '☾ Dark'}
+      {dark ? '☀' : '☾'}
     </button>
   )
 }

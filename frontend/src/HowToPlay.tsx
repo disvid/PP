@@ -205,8 +205,14 @@ interface Props {
 export default function HowToPlay({ open, onOpen, onClose }: Props) {
   return (
     <>
-      <button onClick={onOpen} data-testid="nav-howto" className="btn-magenta px-3 py-1 text-sm">
-        ? How to Play
+      <button
+        onClick={onOpen}
+        data-testid="nav-howto"
+        aria-label="How to play"
+        title="How to play"
+        className="btn-magenta flex h-8 w-8 items-center justify-center p-0 text-base font-extrabold leading-none"
+      >
+        ?
       </button>
       {/* in a portal, so no styled ancestor can become the containing block of the fixed overlay */}
       {createPortal(<AnimatePresence>{open && <HowToPlayModal onClose={onClose} />}</AnimatePresence>, document.body)}

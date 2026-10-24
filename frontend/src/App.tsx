@@ -106,6 +106,16 @@ function LoginRoute({ onLogin }: { onLogin: (name: string) => void }) {
   )
 }
 
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+      <path d="M7 6H3.5v1.5A3.5 3.5 0 0 0 7 11M17 6h3.5v1.5A3.5 3.5 0 0 1 17 11" />
+      <path d="M12 14v4M8 20h8" />
+    </svg>
+  )
+}
+
 interface AuthProps {
   player: string | null
   onSignOut: () => void
@@ -129,25 +139,40 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
 
   return (
     <div className="mx-auto max-w-6xl px-5 pb-12 pt-6">
-      <header className="panel-ink mb-8 flex flex-wrap items-center justify-between gap-4 px-5 py-3">
-        <h1 className="-rotate-2 border-4 border-ink bg-neon px-3 py-0.5 text-2xl font-extrabold uppercase tracking-tight text-ink shadow-[4px_4px_0_#e4007c]">
-          Proof Puzzle
-        </h1>
-        <nav className="flex flex-wrap items-center gap-2.5">
+      <header className="panel-ink mb-8 grid items-center gap-x-4 gap-y-3 px-5 py-3 md:grid-cols-[1fr_auto_1fr]">
+        {/* left: logo plus the two icon shortcuts */}
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="-rotate-2 border-4 border-ink bg-neon px-3 py-0.5 text-2xl font-extrabold uppercase tracking-tight text-ink shadow-[4px_4px_0_#e4007c]">
+            Proof Puzzle
+          </h1>
           <HowToPlay open={isHowToPlayOpen} onOpen={() => setIsHowToPlayOpen(true)} onClose={() => setIsHowToPlayOpen(false)} />
+          <NavLink
+            to="/leaderboard"
+            aria-label="Leaderboard"
+            title="Leaderboard"
+            data-testid="nav-leaderboard"
+            className={({ isActive }) => `btn flex h-8 w-8 items-center justify-center p-0 ${isActive ? 'btn-neon -translate-y-0.5' : 'btn-paper'}`}
+          >
+            <TrophyIcon />
+          </NavLink>
+        </div>
+        {/* center: the game modes */}
+        <nav className="flex flex-wrap items-center justify-center gap-2.5">
           <NavLink to="/game" className={link} data-testid="nav-game">Game</NavLink>
           <NavLink to="/daily" className={link} data-testid="nav-daily">Daily</NavLink>
           <NavLink to="/battle" className={link} data-testid="nav-battle">Battle</NavLink>
           <NavLink to="/builder" className={link} data-testid="nav-builder">Level Builder</NavLink>
-          <NavLink to="/leaderboard" className={link} data-testid="nav-leaderboard">Leaderboard</NavLink>
+        </nav>
+        {/* right: theme and who you are */}
+        <div className="flex flex-wrap items-center gap-3 md:justify-end">
           <ThemeToggle />
-          <span className="ml-2 text-sm font-semibold text-bone">
+          <span className="text-sm font-semibold text-bone">
             <span className="font-mono text-neon">@{player}</span> ·{' '}
             <button className="btn-bare !text-bone hover:!text-neon" onClick={signOut} data-testid="sign-out">
               bail out
             </button>
           </span>
-        </nav>
+        </div>
       </header>
       <Outlet />
     </div>
