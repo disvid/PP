@@ -1,0 +1,26 @@
+# Render Blueprint for the backend. In the Render dashboard: New > Blueprint > pick this repository.
+# (The frontend goes to Vercel with Root Directory "frontend"; see the README.)
+
+services:
+  - type: web
+    name: proof-puzzle-api
+    runtime: docker
+    # the image needs frontend/src/data (shared level data), so the build context is the repository root
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    # persistent disks are not available on the free plan; on a free instance every restart wipes accounts and scores
+    plan: starter
+    # battles and the matchmaking queue live in memory, so never run more than one instance
+    numInstances: 1
+    healthCheckPath: /api/health
+    disk:
+      name: proof-puzzle-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DB_PATH
+        value: /data/proof-puzzle.db
+      # the Vercel site's address, e.g. https://proof-puzzle.vercel.app (asked for when the Blueprint is created)
+      - key: FRONTEND_URL
+        sync: false
+      # PORT is set by Render itself and read by the server

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "rootDir": "..",
+    "outDir": "dist"
+  },
+  "include": [
+    "*.ts",
+    "../frontend/src/data/*.ts"
+  ],
+  "exclude": [
+    "verify-levels.ts",
+    "search-macros.ts",
+    "battle-bot.ts",
+    "solutions.ts",
+    "dist",
+    "node_modules"
+  ]
+}

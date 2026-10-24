@@ -1,0 +1,353 @@
+@import "tailwindcss";
+
+/* Neo-brutalist "math hacker" system: graph paper, stark ink, thick borders, hard offset shadows, neon accents. */
+@theme {
+  --font-sans: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Fira Code Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-ink: #0a0a0a;
+  --color-paper: #f1ecdd;
+  --color-card: #fffcf2;
+  --color-neon: #ffe600;
+  --color-magenta: #e4007c;
+  --color-aqua: #00e5ff;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  background-color: var(--color-paper);
+  /* graph paper: fine grid plus a heavier line every 5 cells */
+  background-image:
+    linear-gradient(rgb(10 10 10 / 0.16) 2px, transparent 2px),
+    linear-gradient(90deg, rgb(10 10 10 / 0.16) 2px, transparent 2px),
+    linear-gradient(rgb(10 10 10 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(10 10 10 / 0.06) 1px, transparent 1px);
+  background-size: 130px 130px, 130px 130px, 26px 26px, 26px 26px;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--color-neon);
+  color: var(--color-ink);
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+}
+
+/* ---- containers: three weights, so nothing looks stamped from one mold ---- */
+.panel {
+  background: var(--color-card);
+  color: var(--color-ink);
+  border: 3px solid var(--color-ink);
+  box-shadow: 6px 6px 0 var(--color-ink);
+}
+.panel-heavy {
+  background: var(--color-card);
+  color: var(--color-ink);
+  border: 5px solid var(--color-ink);
+  box-shadow: 10px 10px 0 var(--color-ink);
+}
+.panel-light {
+  background: var(--color-card);
+  color: var(--color-ink);
+  border: 2px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+.panel-ink {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border: 5px solid var(--color-ink);
+  box-shadow: 8px 8px 0 var(--color-magenta);
+}
+.shadow-aqua {
+  box-shadow: 8px 8px 0 var(--color-aqua), 8px 8px 0 3px var(--color-ink);
+}
+.shadow-magenta {
+  box-shadow: 8px 8px 0 var(--color-magenta), 8px 8px 0 3px var(--color-ink);
+}
+.hatch {
+  background-image: repeating-linear-gradient(45deg, rgb(10 10 10 / 0.1) 0 10px, transparent 10px 20px);
+}
+
+/* ---- mechanical-key buttons ---- */
+button,
+.btn {
+  display: inline-block;
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-ink);
+  background: var(--color-card);
+  border: 3px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out,
+    background-color 0.12s;
+}
+button:not(:disabled):hover,
+.btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--color-ink);
+}
+/* pressed: the shadow disappears and the key sinks 4px down and right, into the page */
+button:not(:disabled):active,
+.btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--color-ink);
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: 2px 2px 0 var(--color-ink);
+  background-image: repeating-linear-gradient(45deg, rgb(10 10 10 / 0.12) 0 6px, transparent 6px 12px);
+}
+.btn-neon {
+  background-color: var(--color-neon);
+}
+.btn-aqua {
+  background-color: var(--color-aqua);
+}
+.btn-magenta {
+  background-color: var(--color-magenta);
+  color: #fff;
+}
+.btn-paper {
+  background-color: var(--color-card);
+}
+.btn-ink {
+  background-color: var(--color-ink);
+  color: var(--color-neon);
+}
+/* links that should look like text, and tiny controls that should not be keys */
+.btn-bare,
+button.btn-bare {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn-bare:hover,
+button.btn-bare:not(:disabled):hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--color-magenta);
+}
+.btn-bare:active,
+button.btn-bare:not(:disabled):active {
+  transform: none;
+}
+.dot {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 var(--color-ink);
+}
+.dot-on {
+  background: var(--color-magenta);
+}
+
+/* ---- form controls ---- */
+input:not([type="range"]):not([type="checkbox"]),
+select,
+textarea {
+  font-family: inherit;
+  color: var(--color-ink);
+  background: var(--color-card);
+  border: 3px solid var(--color-ink);
+  box-shadow: 3px 3px 0 var(--color-ink);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+input:not([type="range"]):not([type="checkbox"]):hover,
+select:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+input:not([type="range"]):not([type="checkbox"]):focus,
+select:focus,
+textarea:focus {
+  outline: 3px solid var(--color-magenta);
+  outline-offset: 2px;
+}
+input::placeholder {
+  color: rgb(10 10 10 / 0.45);
+}
+input[type="checkbox"] {
+  accent-color: var(--color-magenta);
+}
+button:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid var(--color-magenta);
+  outline-offset: 3px;
+}
+
+/* the time-travel slider: a rail with a square key as the handle */
+input[type="range"] {
+  appearance: none;
+  height: 16px;
+  background: var(--color-card);
+  border: 3px solid var(--color-ink);
+  box-shadow: 3px 3px 0 var(--color-ink);
+  cursor: pointer;
+}
+input[type="range"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 26px;
+  background: var(--color-neon);
+  border: 3px solid var(--color-ink);
+  box-shadow: 3px 3px 0 var(--color-ink);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 20px;
+  border-radius: 0;
+  background: var(--color-neon);
+  border: 3px solid var(--color-ink);
+  box-shadow: 3px 3px 0 var(--color-ink);
+}
+
+/* ---- tables ---- */
+.board-table th {
+  background: var(--color-ink);
+  color: var(--color-neon);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+.board-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 2px solid var(--color-ink);
+}
+/* leaderboard rows jump out of the page on hover */
+.lift-row {
+  position: relative;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s ease-out,
+    background-color 0.1s;
+}
+.lift-row:hover {
+  transform: translate(-3px, -3px);
+  background-color: var(--color-neon);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+
+/* ---- board tiles: thick physical blocks with bevelled edges ---- */
+.tile {
+  border: 4px solid var(--color-ink);
+  box-shadow:
+    inset -6px -6px 0 rgb(0 0 0 / 0.26),
+    inset 5px 5px 0 rgb(255 255 255 / 0.38),
+    0 0 0 0 var(--color-ink);
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out;
+}
+.tile-sm {
+  border-width: 2px;
+  box-shadow:
+    inset -3px -3px 0 rgb(0 0 0 / 0.26),
+    inset 2px 2px 0 rgb(255 255 255 / 0.38);
+}
+.tile:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset -6px -6px 0 rgb(0 0 0 / 0.26),
+    inset 5px 5px 0 rgb(255 255 255 / 0.38),
+    0 5px 0 0 var(--color-ink);
+}
+
+/* ---- error feedback ---- */
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(3px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-5px);
+  }
+  40%,
+  60% {
+    transform: translateX(5px);
+  }
+}
+@keyframes flash-border {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(228 0 124 / 0);
+  }
+  50% {
+    box-shadow: 0 0 0 5px var(--color-magenta);
+  }
+}
+/* the block that caused an illegal move: shake it and flash its border (it stays magenta afterwards) */
+.block-error {
+  border-color: var(--color-magenta) !important;
+  animation:
+    shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+    flash-border 0.5s ease-in-out 3;
+}
+/* errors that point at no particular block (syntax errors) shake the whole board */
+.board-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .block-error {
+    animation: flash-border 0.5s ease-in-out 3;
+  }
+  .board-shake {
+    animation: none;
+  }
+}
+
+/* ---- Monaco line decorations ---- */
+.ln-active {
+  background: rgb(255 230 0 / 0.18);
+  border-left: 4px solid var(--color-neon);
+}
+.ln-err {
+  background: rgb(228 0 124 / 0.3);
+  border-left: 4px solid var(--color-magenta);
+}
+
+/* hint flash: an outline, because box-shadow already carries the tile's bevel */
+.tile-flash {
+  outline: 4px solid var(--color-magenta);
+  outline-offset: 3px;
+}
+
+/* colored panel fills (declared after .panel so they win) */
+.panel-neon {
+  background: var(--color-neon);
+}
+.panel-magenta {
+  background: var(--color-magenta);
+  color: #fff;
+}
