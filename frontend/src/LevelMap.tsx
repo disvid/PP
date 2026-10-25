@@ -40,12 +40,6 @@ function Map({ onClose, current, solvedNow, onPick }: Omit<Props, 'open'>) {
   const solved = states.filter((s) => s !== 'open').length
   const optimal = states.filter((s) => s === 'optimal').length
 
-  const firstGenerated = LEVELS.findIndex((l) => l.id > 23)
-  const groups = [
-    { title: 'Handcrafted', hint: 'levels 1 to 23', from: 0, to: firstGenerated },
-    { title: 'Generated', hint: 'fresh scrambles, rising difficulty', from: firstGenerated, to: LEVELS.length },
-  ]
-
   return (
     <motion.div
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-abyss/70 p-4"
@@ -79,39 +73,29 @@ function Map({ onClose, current, solvedNow, onPick }: Omit<Props, 'open'>) {
         </div>
 
         <div className="space-y-5 overflow-y-auto px-6 py-5">
-          {groups.map((g) => (
-            <div key={g.title}>
-              <p className="mb-2 font-extrabold uppercase">
-                {g.title} <span className="font-mono text-xs font-medium normal-case">{g.hint}</span>
-              </p>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(3.6rem,1fr))] gap-2">
-                {LEVELS.slice(g.from, g.to).map((l, k) => {
-                  const i = g.from + k
-                  const s = states[i]
-                  const look = s === 'optimal' ? 'btn-neon' : s === 'solved' ? 'btn-aqua' : 'btn-paper'
-                  return (
-                    <button
-                      key={l.id}
-                      data-testid="map-tile"
-                      data-level={l.id}
-                      data-state={s}
-                      title={`${l.id}. ${l.title} · ${l.gridSize}×${l.gridSize}, max ${l.parLimit} lines${s === 'optimal' ? ' · optimal ★' : s === 'solved' ? ' · solved' : ''}`}
-                      onClick={() => {
-                        onPick(i)
-                        onClose()
-                      }}
-                      className={`btn btn-tile ${look} ${
-                        i === current ? 'outline outline-[3px] outline-offset-2 outline-magenta' : ''
-                      }`}
-                    >
-                      <span className="text-base">{l.id}</span>
-                      <span className="mt-0.5 text-[0.6rem]">{s === 'optimal' ? '★' : s === 'solved' ? '✓' : `${l.gridSize}×${l.gridSize}`}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(3.6rem,1fr))] gap-2">
+            {LEVELS.map((l, i) => {
+              const s = states[i]
+              const look = s === 'optimal' ? 'btn-neon' : s === 'solved' ? 'btn-aqua' : 'btn-paper'
+              return (
+                <button
+                  key={l.id}
+                  data-testid="map-tile"
+                  data-level={l.id}
+                  data-state={s}
+                  title={`${l.id}. ${l.title} · ${l.gridSize}×${l.gridSize}, max ${l.parLimit} lines${s === 'optimal' ? ' · optimal ★' : s === 'solved' ? ' · solved' : ''}`}
+                  onClick={() => {
+                    onPick(i)
+                    onClose()
+                  }}
+                  className={`btn btn-tile ${look} ${i === current ? 'outline outline-[3px] outline-offset-2 outline-magenta' : ''}`}
+                >
+                  <span className="text-base">{l.id}</span>
+                  <span className="mt-0.5 text-[0.6rem]">{s === 'optimal' ? '★' : s === 'solved' ? '✓' : `${l.gridSize}×${l.gridSize}`}</span>
+                </button>
+              )
+            })}
+          </div>
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[0.7rem] font-medium">
             <span><span className="mr-1 inline-block h-3 w-3 border-2 border-ink bg-neon align-middle" />optimal ★</span>
             <span><span className="mr-1 inline-block h-3 w-3 border-2 border-ink bg-aqua align-middle" />solved ✓</span>
