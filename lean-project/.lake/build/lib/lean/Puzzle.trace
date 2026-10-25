@@ -1,0 +1,30 @@
+{"synthetic": false,
+ "schemaVersion": "2025-09-10",
+ "outputs":
+ {"o": ["c94329419338d457.olean"],
+  "m": false,
+  "i": "33b7331f3417ce1a.ilean",
+  "c": "d21f277964ead6c1.c"},
+ "log":
+ [{"message":
+   ".> LEAN_PATH=C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\.lake\\build\\lib\\lean c:\\Users\\dishi\\.elan\\toolchains\\leanprover--lean4---v4.35.0\\bin\\lean.exe C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\Puzzle.lean -o C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\.lake\\build\\lib\\lean\\Puzzle.olean -i C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\.lake\\build\\lib\\lean\\Puzzle.ilean -c C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\.lake\\build\\ir\\Puzzle.c --setup C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\.lake\\build\\ir\\Puzzle.setup.json --json",
+   "level": "trace"}],
+ "inputs":
+ [["deps",
+   [["puzzle/Puzzle:extraDep", [["@puzzle:extraDep", "00000000000006bb"]]],
+    ["imports", "00000000000006bb"]]],
+  ["libs",
+   [["import dynlibs", "00000000000006bb"],
+    ["package external libraries", "00000000000006bb"],
+    ["module dynlibs", "00000000000006bb"],
+    ["module plugins", "00000000000006bb"]]],
+  ["Lean 4.35.0, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc",
+   "407ce514b71d5a10"],
+  ["C:\\Users\\dishi\\Desktop\\Proof Puzzle\\proof-puzzle\\lean-project\\Puzzle.lean",
+   "5a486e8322ac9e44"],
+  ["options", "00000000000006bb"],
+  ["isModule: false", "feefd2a0d3a1847e"],
+  ["Module.name: Puzzle", "8af1080584b96789"],
+  ["Package.id?: (some puzzle)", "b33fc5254ee608f7"],
+  ["Module.leanArgs: #[]", "00000000000006bb"]],
+ "depHash": "5b80a16dc113c8cc"}
