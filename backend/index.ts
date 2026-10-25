@@ -3,8 +3,10 @@ import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { customToLevel, decodeCustom, encodeCustom, Level, LEVELS, levelKey, validateCustom } from "../frontend/src/data/levels";
 import { computeScore, countLines, HINT_POINTS, HINT_TIME_MS } from "../frontend/src/data/scoring";
+import { achievementReport, onSolve, onTutorialDone, streakOf } from "./achievements";
+import { checkLesson } from "./tutorial";
 import {
-  addFriend, addHint, dailyByLevelKey, dailyCompletion, friendNames, insertUser, leaderboard, pauseSession, recordDailyCompletion, recordSolve, saveCustomLevel, sessionOf,
+  addFriend, addHint, dailyByLevelKey, dailyCompletion, dailyHistory, friendNames, insertUser, leaderboard, pauseSession, progressOf, recordDailyCompletion, recordSolve, saveCustomLevel, sessionOf,
   setPasswordHash, startSession, User, userByName, userRowByName,
 } from "./db";
 import { attachBattles } from "./battle";
@@ -12,7 +14,7 @@ import { checkPassword, clearFailures, dummyPasswordCheck, hashPassword, MAX_PAS
 import { corsOrigin, publicBaseUrl } from "./config";
 import { boardAfter, previewLine, PuzzleError } from "./engine";
 import { findHint } from "./hint";
-import { todaysDaily } from "./daily";
+import { todaysDaily, utcDate } from "./daily";
 import { evaluateProof, leanAvailable } from "./proof";
 
 declare module "express-serve-static-core" {
@@ -228,9 +230,58 @@ app.get("/api/daily", (req, res) => {
     level: d.payload,
     // the signed-in player's result for today, if they have already used their attempt
     completion: c
-      ? { lines: c.lines, optimalLines: c.optimal_lines, points: c.points, canRevealSolution: c.lines > c.optimal_lines }
+      ? { lines: c.lines, optimalLines: c.optimal_lines, points: c.points, timeMs: c.time_ms, canRevealSolution: c.lines > c.optimal_lines }
       : null,
+    streak: req.user ? streakOf(req.user.id, d.date) : null,
   });
+});
+
+/** The signed-in player's daily record: streaks plus every completed day, for the calendar. */
+app.get("/api/daily/stats", (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+  const today = todaysDaily().date;
+  const history = dailyHistory(user.id).map((r) => ({ date: r.date, number: r.number, lines: r.lines, optimalLines: r.optimal_lines }));
+  res.json({
+    today,
+    ...streakOf(user.id, today),
+    solved: history.length,
+    optimal: history.filter((h) => h.lines <= h.optimalLines).length,
+    history,
+  });
+});
+
+/** The signed-in player's best result per built-in level, for the level map. */
+app.get("/api/progress", (req, res) => {
+  const user = requireUser(req, res);
+  if (user) res.json({ levels: progressOf(user.id) });
+});
+
+// ---- badges and the tutorial -----------------------------------------------------------------------------
+app.get("/api/achievements", (req, res) => {
+  const user = requireUser(req, res);
+  if (user) res.json(achievementReport(user.id));
+});
+
+/** Runs a proof against a tutorial lesson. Public and unscored: it only reports whether the lesson passed. */
+app.post("/api/tutorial/check", async (req, res) => {
+  const { lesson, code } = req.body ?? {};
+  if (typeof lesson !== "string" || typeof code !== "string" || code.length > 5000) {
+    return void res.status(400).json({ error: { line: 0, message: "Bad request", cells: [] } });
+  }
+  try {
+    const result = await checkLesson(lesson, code);
+    if (!result) return void res.status(404).json({ error: { line: 0, message: "Unknown lesson", cells: [] } });
+    res.json(result);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: { line: 0, message: "Internal error", cells: [] } });
+  }
+});
+
+app.post("/api/tutorial/complete", (req, res) => {
+  const user = requireUser(req, res);
+  if (user) res.json({ achievements: onTutorialDone(user.id) });
 });
 
 /**
@@ -252,7 +303,7 @@ app.post("/api/evaluate", async (req, res) => {
   const level = levelFrom(req, res);
   if (!level) return;
   const { code } = req.body;
-  if (typeof code !== "string") return void res.status(400).json({ error: { line: 0, message: "Bad request", cells: [] } });
+  if (typeof code !== "string" || code.length > 5000) return void res.status(400).json({ error: { line: 0, message: "Bad request", cells: [] } });
   const lock = dailyLock(level, req.user);
   if (lock?.completion) {
     return void res.status(409).json({
@@ -263,6 +314,8 @@ app.post("/api/evaluate", async (req, res) => {
   try {
     const result = await evaluateProof(level, code);
     let score = null;
+    let achievements: string[] = [];
+    let streak = null;
     if (result.solved && req.user) {
       const key = levelKey(level);
       const lines = countLines(code);
@@ -280,8 +333,14 @@ app.post("/api/evaluate", async (req, res) => {
       if (computed && session) {
         score = Object.assign(computed, recordSolve(req.user.id, key, lines, session.elapsedMs, session.hints, computed), { elapsedMs: session.elapsedMs });
       }
+      // Badges: a built-in level counts only when it was started (the same rule as scoring); a daily counts once.
+      const builtin = !level.custom && computed !== null;
+      if (builtin || lock) {
+        achievements = onSolve({ userId: req.user.id, code, lines, optimalLines: level.optimalLines, builtin, daily: !!lock });
+      }
+      if (lock) streak = streakOf(req.user.id, lock.daily.date);
     }
-    res.json({ ...result, score });
+    res.json({ ...result, score, achievements, streak });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: { line: 0, message: "Internal error", cells: [] } });

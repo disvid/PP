@@ -32,6 +32,8 @@ export interface Level {
   optimalLines: number
   /** Base64url payload for user-made levels (see encodeCustom). Built-in levels leave this unset. */
   custom?: string
+  /** Cells [x, y] whose block is locked: no command may swap, paint or rotate it. */
+  locked?: [number, number][]
 }
 
 export const blocksEqual = (a: Block, b: Block) => a.color === b.color && a.rot === b.rot
@@ -423,7 +425,11 @@ export interface CustomPayload {
   par: number
   /** The creator's best known solution length (defaults to par). */
   optimal: number
+  /** Locked cells [x, y], see Level.locked. */
+  locked?: [number, number][]
 }
+
+export const MAX_LOCKED = 4
 
 const TOKEN = /^[BGRYP][\^>v<]?$/
 
@@ -461,12 +467,30 @@ export function validateCustom(raw: unknown): CustomPayload {
     }
   }
   if (!target && !property) throw new Error('Level needs a target board or a property')
+  const locked = validLocked(p.locked, p.size, initial, target)
   const optimal = p.optimal === undefined ? p.par! : p.optimal
   if (!Number.isInteger(optimal) || optimal < 1 || optimal > p.par!) throw new Error('Optimal lines must be between 1 and par')
   // paint never creates arrows and swap only moves them, so the arrow counts must agree
   const arrows = (rows: string[]) => rows.join(' ').split(' ').filter((t) => t.length > 1).length
   if (target && arrows(initial) !== arrows(target)) throw new Error('Initial and target must have the same number of arrow blocks')
-  return { title, size: p.size, initial, ...(target && { target }), ...(property && { property }), par: p.par!, optimal }
+  return { title, size: p.size, initial, ...(target && { target }), ...(property && { property }), par: p.par!, optimal, ...(locked.length > 0 && { locked }) }
+}
+
+/** Locked cells: distinct, on the board, and (when there is a target) holding the same block before and after, since nothing can change them. */
+function validLocked(raw: unknown, size: number, initial: string[], target?: string[]): [number, number][] {
+  if (raw === undefined) return []
+  if (!Array.isArray(raw) || raw.length > MAX_LOCKED) throw new Error(`At most ${MAX_LOCKED} locked blocks`)
+  const seen = new Set<string>()
+  const cells = raw.map((c): [number, number] => {
+    const ok = Array.isArray(c) && c.length === 2 && c.every((n) => Number.isInteger(n) && n >= 0 && n < size)
+    if (!ok) throw new Error('Bad locked block')
+    const [x, y] = c as [number, number]
+    if (seen.has(`${x},${y}`)) throw new Error('Duplicate locked block')
+    seen.add(`${x},${y}`)
+    if (target && initial[y].split(' ')[x] !== target[y].split(' ')[x]) throw new Error(`Locked block (${x}, ${y}) must be the same in the initial and target boards`)
+    return [x, y]
+  })
+  return cells
 }
 
 export function encodeCustom(p: CustomPayload): string {
@@ -501,6 +525,7 @@ export function customToLevel(p: CustomPayload): Level {
     parLimit: p.par,
     optimalLines: p.optimal,
     custom: encodeCustom(p),
+    ...(p.locked && { locked: p.locked }),
   }
 }
 

@@ -2,7 +2,7 @@
 // make progress towards the target. It finds a shortest sequence in single-block moves (macros are
 // ignored), and the hint is only the first move of that sequence.
 import { Block, Board, blocksEqual, COLORS, isSolved, Level, violations } from "../frontend/src/data/levels";
-import { applyOp, Op, PuzzleError } from "./engine";
+import { applyOp, lockedSet, Op, PuzzleError } from "./engine";
 
 export interface Hint {
   kind: "swap" | "paint" | "rotate";
@@ -15,9 +15,9 @@ export interface Hint {
 export type Move = Omit<Op, "line">;
 
 const key = (b: Board) => b.map((r) => r.map((c) => c.color[0] + (c.rot ?? "-")).join("")).join("/");
-const apply = (b: Board, m: Move): Board | null => {
+const apply = (b: Board, m: Move, locked?: Set<string>): Board | null => {
   try {
-    return applyOp(b, { ...m, line: 0 });
+    return applyOp(b, { ...m, line: 0 }, locked);
   } catch (e) {
     if (e instanceof PuzzleError) return null;
     throw e;
@@ -69,7 +69,7 @@ interface Node {
 }
 
 /** Breadth-first search; returns the whole shortest move sequence, or null if none was found within `cap` states. */
-function bfs(start: Board, goal: (b: Board) => boolean, moves: (b: Board) => Move[], cap: number): Move[] | null {
+function bfs(start: Board, goal: (b: Board) => boolean, moves: (b: Board) => Move[], cap: number, locked?: Set<string>): Move[] | null {
   const seen = new Set([key(start)]);
   let frontier: Node[] = [{ b: start }];
   let nodes = 0;
@@ -77,7 +77,7 @@ function bfs(start: Board, goal: (b: Board) => boolean, moves: (b: Board) => Mov
     const next: Node[] = [];
     for (const node of frontier)
       for (const m of moves(node.b)) {
-        const nb = apply(node.b, m);
+        const nb = apply(node.b, m, locked);
         if (!nb) continue;
         const k = key(nb);
         if (seen.has(k)) continue;
@@ -107,15 +107,16 @@ const toHint = (m: Move, remaining: number | null): Hint => {
 export function findHint(level: Level, board: Board): Hint | null {
   const goal = (b: Board) => isSolved(level, b);
   if (goal(board)) return null;
+  const locked = lockedSet(level);
   const t = level.targetState;
-  const pruned = t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000) : null;
-  const found = pruned ?? bfs(board, goal, allMoves, 250_000);
+  const pruned = t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000, locked) : null;
+  const found = pruned ?? bfs(board, goal, allMoves, 250_000, locked);
   if (found) return toHint(found[0], found.length);
   // No short proof found: fall back to the single move that most reduces the distance.
   const score = (b: Board) => (level.property ? violations(b, level.property) : 0) + (t ? b.flat().reduce((s, c, i) => s + cost(c, t.flat()[i]), 0) : 0);
   let best: { m: Move; s: number } | null = null;
   for (const m of allMoves(board)) {
-    const nb = apply(board, m);
+    const nb = apply(board, m, locked);
     if (nb && (!best || score(nb) < best.s)) best = { m, s: score(nb) };
   }
   return best && best.s < score(board) ? toHint(best.m, null) : null;
@@ -129,7 +130,8 @@ export function solveSequence(level: Level, board: Board): Move[] | null {
   const goal = (b: Board) => isSolved(level, b);
   if (goal(board)) return [];
   const t = level.targetState;
-  return (t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000) : null) ?? bfs(board, goal, allMoves, 250_000);
+  const locked = lockedSet(level);
+  return (t ? bfs(board, goal, (b) => usefulMoves(b, t), 300_000, locked) : null) ?? bfs(board, goal, allMoves, 250_000, locked);
 }
 
 /** Fewest single-block commands that solve the level from `board`, or null if the search gave up. */

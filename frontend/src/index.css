@@ -163,6 +163,19 @@ button:disabled {
   color: var(--color-neon);
 }
 /* links that should look like text, and tiny controls that should not be keys */
+/* level-map tile: a small square button with a number over a status mark */
+.btn-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 3.5rem;
+  padding: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  line-height: 1;
+  box-shadow: 3px 3px 0 var(--shade);
+}
+
 /* square icon button: centred glyph */
 .btn-icon {
   display: inline-flex;
@@ -508,4 +521,21 @@ input[type="range"]::-moz-range-thumb {
 .bg-magenta,
 .panel-magenta {
   color: #fff;
+}
+
+/* locked block: a padlock badge in the corner and a striped overlay, so it reads as "do not touch" */
+.tile-lock {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.6));
+  pointer-events: none;
+}
+.tile-lock-sm {
+  font-size: 0.6rem;
+}
+[data-locked='true'] > div > div > .tile {
+  background-image: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.22) 0 5px, transparent 5px 10px);
 }

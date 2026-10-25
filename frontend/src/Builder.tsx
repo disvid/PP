@@ -2,6 +2,7 @@ import { useState } from 'react'
 import BoardView from './BoardView'
 import { api } from './api'
 import { COLORS, boardToRows, theoremText } from './data/levels'
+import { MAX_LOCKED } from './data/levels'
 import type { Block, Board, Color, Constraint } from './data/levels'
 
 const DIRS: (0 | 1 | 2 | 3 | undefined)[] = [undefined, 0, 1, 2, 3]
@@ -22,6 +23,7 @@ export default function Builder({ onPlay }: Props) {
   const [initial, setInitial] = useState<Board>(blank(3))
   const [target, setTarget] = useState<Board>(blank(3))
   const [constraints, setConstraints] = useState<Constraint[]>([{ kind: 'count', color: 'red', n: 2 }])
+  const [locked, setLocked] = useState<[number, number][]>([])
   const [result, setResult] = useState<{ url: string; payload: string } | null>(null)
   const [error, setError] = useState('')
 
@@ -29,10 +31,18 @@ export default function Builder({ onPlay }: Props) {
     setSize(n)
     setInitial(blank(n))
     setTarget(blank(n))
+    setLocked([])
   }
 
-  // click: next color; shift-click: next arrow direction (none, up, right, down, left)
-  const edit = (set: (f: (b: Board) => Board) => void) => (x: number, y: number, e: React.MouseEvent) =>
+  const isLocked = (x: number, y: number) => locked.some(([lx, ly]) => lx === x && ly === y)
+
+  // click: next color; shift-click: next arrow direction (none, up, right, down, left); alt-click: lock or unlock
+  const edit = (set: (f: (b: Board) => Board) => void) => (x: number, y: number, e: React.MouseEvent) => {
+    if (e.altKey) {
+      setLocked((ls) => (isLocked(x, y) ? ls.filter(([lx, ly]) => lx !== x || ly !== y) : ls.length < MAX_LOCKED ? [...ls, [x, y]] : ls))
+      return
+    }
+    if (isLocked(x, y)) return // a locked block cannot be edited, only unlocked
     set((b) =>
       b.map((row, ry) =>
         row.map((blk, rx) => {
@@ -46,6 +56,7 @@ export default function Builder({ onPlay }: Props) {
         }),
       ),
     )
+  }
 
   const updateConstraint = (i: number, c: Constraint) => setConstraints((cs) => cs.map((o, k) => (k === i ? c : o)))
 
@@ -58,7 +69,11 @@ export default function Builder({ onPlay }: Props) {
       par,
       optimal: Math.min(optimal, par),
       initial: boardToRows(initial),
-      ...(mode === 'board' ? { target: boardToRows(target) } : { property: { constraints } }),
+      // a locked block can never change, so it has to be the same in both boards
+      ...(mode === 'board'
+        ? { target: boardToRows(target.map((row, y) => row.map((b, x) => (isLocked(x, y) ? initial[y][x] : b)))) }
+        : { property: { constraints } }),
+      ...(locked.length ? { locked } : {}),
     }
     const r = await api<{ url: string; level: string; error?: string }>('/api/custom-levels', body)
     if (!r.ok) return setError(r.data.error ?? 'Could not save the level')
@@ -69,7 +84,7 @@ export default function Builder({ onPlay }: Props) {
   return (
     <section className="panel-heavy w-full rotate-[0.3deg] p-6" data-testid="builder">
       <h2 className="mb-2 inline-block -rotate-1 border-4 border-ink bg-abyss px-3 py-1 text-2xl font-extrabold uppercase tracking-tight text-neon">Level Builder</h2>
-      <p className="mb-4 font-mono text-xs font-medium">Click a block to change its color, shift-click to add or turn an arrow.</p>
+      <p className="mb-4 font-mono text-xs font-medium">Click a block to change its color, shift-click to add or turn an arrow, alt-click to lock it (up to 4). Commands cannot touch a locked block.</p>
       <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
         <input className={field} value={title} maxLength={40} onChange={(e) => setTitle(e.target.value)} aria-label="Title" />
         <label>
@@ -98,12 +113,12 @@ export default function Builder({ onPlay }: Props) {
       <div className="flex flex-wrap items-start gap-6">
         <div>
           <p className="mb-2 font-mono text-xs font-bold uppercase">Initial</p>
-          <BoardView board={initial} size="sm" testPrefix="bi" onCellClick={edit(setInitial)} />
+          <BoardView board={initial} size="sm" testPrefix="bi" locked={locked} onCellClick={edit(setInitial)} />
         </div>
         {mode === 'board' ? (
           <div>
             <p className="mb-2 font-mono text-xs font-bold uppercase">Target</p>
-            <BoardView board={target} size="sm" testPrefix="bt" onCellClick={edit(setTarget)} />
+            <BoardView board={target} size="sm" testPrefix="bt" locked={locked} onCellClick={edit(setTarget)} />
           </div>
         ) : (
           <div className="min-w-64 text-sm">

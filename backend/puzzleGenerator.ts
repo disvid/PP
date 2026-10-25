@@ -147,12 +147,25 @@ export interface Puzzle {
   generated: Generated;
 }
 
+/**
+ * 0-2 locked blocks for a generated puzzle, taken from the cells that end up exactly as they started (a locked block can
+ * never change, so only those are allowed). Uses its own random stream, so the boards themselves are unaffected.
+ */
+function pickLocks(g: Generated, seed: string): [number, number][] {
+  const rng = makeRng(seed);
+  const free = g.initial.flatMap((row, y) => row.flatMap((b, x) => (sameBlock(b, g.target[y][x]) ? [[x, y] as [number, number]] : [])));
+  const picks: [number, number][] = [];
+  for (let n = Math.min(rng.int(3), free.length); n > 0; n--) picks.push(free.splice(rng.int(free.length), 1)[0]);
+  return picks;
+}
+
 /** A 3x3 puzzle made by 3-7 random transformations. The same seed always gives the same puzzle. */
 export function generatePuzzle(seed: string, title: string): Puzzle {
   const options: GenOptions = { size: 3, ops: [3, 7], colors: 3, arrows: [1, 2] };
   for (let attempt = 0; attempt < 200; attempt++) {
     const g = generateBoards(`${seed}#${attempt}`, options);
     if (!g) continue;
+    const locked = pickLocks(g, `${seed}#${attempt}#locks`);
     const payload: CustomPayload = {
       title,
       size: 3,
@@ -160,8 +173,21 @@ export function generatePuzzle(seed: string, title: string): Puzzle {
       target: boardToRows(g.target),
       par: g.parLimit,
       optimal: g.optimalLines,
+      ...(locked.length > 0 && { locked }),
     };
     const level = customToLevel(payload);
+    // with locked blocks the shortest proof has to be measured again (it normally stays the same)
+    if (locked.length) {
+      const solution = solveSequence(level, g.initial);
+      if (!solution || solution.length < 2) continue;
+      g.solution = solution;
+      g.optimalLines = solution.length;
+      g.parLimit = solution.length + 2;
+      payload.par = g.parLimit;
+      payload.optimal = g.optimalLines;
+      const relocked = customToLevel(payload);
+      return { level: relocked, payload: relocked.custom!, generated: g };
+    }
     return { level, payload: level.custom!, generated: g };
   }
   throw new Error("could not generate a puzzle");

@@ -9,6 +9,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.dev.json",
     "verify": "tsx verify-levels.ts",
+    "test:features": "tsx test-features.ts",
+    "test:engine": "tsx test-engine.ts",
+    "check": "tsx check.ts",
     "generate:levels": "tsx scripts/generate-levels.ts"
   },
   "keywords": [],

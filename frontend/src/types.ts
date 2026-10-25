@@ -1,5 +1,8 @@
 import type { Board } from './data/levels'
 
+/** consecutive UTC days on which the daily was completed */
+export interface Streak { current: number; longest: number; todayDone: boolean }
+
 export interface EvalError { line: number; message: string; cells: [number, number][] }
 
 export interface EvalResponse {
@@ -11,6 +14,10 @@ export interface EvalResponse {
   message: string
   /** the server refused the run: a daily puzzle that was already completed */
   locked?: boolean
+  /** badges this solve unlocked for the first time */
+  achievements?: string[]
+  /** on a daily: the streak including this solve */
+  streak?: Streak | null
   score: {
     base: number
     optimality: number

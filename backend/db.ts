@@ -73,6 +73,13 @@ db.exec(`
     completed_at INTEGER NOT NULL,
     PRIMARY KEY (user_id, date)
   );
+  -- badges: one row per (player, badge), see frontend/src/data/achievements.ts
+  CREATE TABLE IF NOT EXISTS achievements (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    key TEXT NOT NULL,
+    unlocked_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, key)
+  );
   -- server-side clock: counts only while the level is open on the Game view (pausable), so the
   -- client cannot fake its time. Closing the tab without pausing keeps the clock running.
   DROP TABLE IF EXISTS sessions;
@@ -290,4 +297,44 @@ export function recordDailyCompletion(
   userId: number, date: string, lines: number, optimalLines: number, points: number | null, timeMs: number | null,
 ): boolean {
   return Number(q.putCompletion.run(userId, date, lines, optimalLines, points, timeMs, Date.now()).changes) === 1;
+}
+
+/** Every daily the player has completed, oldest first. */
+export interface DailyHistoryRow { date: string; number: number; lines: number; optimal_lines: number }
+export const dailyHistory = (userId: number) =>
+  db
+    .prepare(
+      `SELECT c.date AS date, p.number AS number, c.lines AS lines, c.optimal_lines AS optimal_lines
+       FROM daily_completions c JOIN daily_puzzles p ON p.date = c.date
+       WHERE c.user_id = ? ORDER BY c.date`,
+    )
+    .all(userId) as unknown as DailyHistoryRow[];
+
+// ---- achievements ------------------------------------------------------------------------------------
+const insertAchievement = db.prepare("INSERT OR IGNORE INTO achievements (user_id, key, unlocked_at) VALUES (?, ?, ?)");
+
+/** Unlocks a badge. True only the first time, so callers can announce exactly the new ones. */
+export const unlockAchievement = (userId: number, key: string): boolean =>
+  Number(insertAchievement.run(userId, key, Date.now()).changes) === 1;
+
+export const achievementsOf = (userId: number) =>
+  db.prepare("SELECT key, unlocked_at FROM achievements WHERE user_id = ?").all(userId) as unknown as { key: string; unlocked_at: number }[];
+
+/** The player's best result on each built-in level (custom and daily levels have `c_...` keys). */
+export const progressOf = (userId: number) =>
+  (
+    db
+      .prepare("SELECT level_key, lines, hints, points FROM scores WHERE user_id = ? AND substr(level_key, 1, 2) <> 'c_'")
+      .all(userId) as unknown as { level_key: string; lines: number; hints: number; points: number }[]
+  ).map((r) => ({ id: Number(r.level_key), lines: r.lines, hints: r.hints, points: r.points }));
+
+/** Built-in levels the player has solved (custom and daily levels have `c_...` keys), and how many of those without hints. */
+export function solveCounts(userId: number): { solved: number; clean: number } {
+  const r = db
+    .prepare(
+      `SELECT COUNT(*) AS solved, COALESCE(SUM(CASE WHEN hints = 0 THEN 1 ELSE 0 END), 0) AS clean
+       FROM scores WHERE user_id = ? AND substr(level_key, 1, 2) <> 'c_'`,
+    )
+    .get(userId) as { solved: number; clean: number };
+  return { solved: Number(r.solved), clean: Number(r.clean) };
 }

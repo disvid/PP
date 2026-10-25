@@ -10,6 +10,7 @@ import crypto from "crypto";
 import type { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { Board, Level } from "../frontend/src/data/levels";
+import { onBattleWin } from "./achievements";
 import { verifyToken } from "./auth";
 import { corsOrigin } from "./config";
 import type { User } from "./db";
@@ -54,11 +55,14 @@ export function attachBattles(httpServer: HttpServer) {
   const finish = (battle: Battle, winner: Player | null, reason: "solved" | "forfeit") => {
     if (battle.over) return;
     battle.over = true;
+    // only a verified solve earns badges; winning because the opponent left does not
+    const earned = winner && reason === "solved" ? onBattleWin(winner.user.id, winner.compiles) : [];
     for (const p of battle.players) {
       p.socket.emit("battle_over", {
         reason,
         winner: winner?.user.name ?? null,
         youWon: winner === p,
+        achievements: winner === p ? earned : [],
         lines: Object.fromEntries(battle.players.map((q) => [q.user.name, q.lines])),
       });
       battles.delete(p.socket.id);

@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import type { Socket } from 'socket.io-client'
 import BoardView from './BoardView'
+import HelperBuilder from './HelperBuilder'
 import ProofEditor from './ProofEditor'
 import { API_URL, session } from './api'
 import { customToLevel, decodeCustom } from './data/levels'
 import type { Board, Level } from './data/levels'
+import { announceAchievements } from './achievementBus'
 import { celebrate } from './effects'
 import type { EvalError } from './types'
 
@@ -14,7 +16,7 @@ const starter = '-- Battle! Be the first to solve it.\n'
 
 interface Battle { level: Level; opponent: string; seq: number }
 interface Opponent { error: boolean; solved: boolean; lines: number; compiles: number }
-interface Over { youWon: boolean; reason: 'solved' | 'forfeit'; winner: string | null; lines: Record<string, number> }
+interface Over { youWon: boolean; reason: 'solved' | 'forfeit'; winner: string | null; lines: Record<string, number>; achievements?: string[] }
 
 /**
  * `/battle`: queue up, get matched with another player, and race on a puzzle that was generated for this match
@@ -33,6 +35,8 @@ export default function BattlePage() {
   const [over, setOver] = useState<Over | null>(null)
 
   const [code, setCode] = useState(starter)
+  const [helperOpen, setHelperOpen] = useState(false)
+  const [insert, setInsert] = useState<{ id: number; text: string; where: 'top' | 'end' } | null>(null)
   const [myBoard, setMyBoard] = useState<Board | null>(null)
   const [myError, setMyError] = useState<EvalError | null>(null)
   const [status, setStatus] = useState('')
@@ -81,6 +85,7 @@ export default function BattlePage() {
       setCompiling(false)
       setOver(o)
       if (o.youWon && o.reason === 'solved') celebrate(roomRef.current)
+      announceAchievements(o.achievements)
     })
     socket.on('battle:error', (e: { message: string }) => {
       setCompiling(false)
@@ -167,11 +172,16 @@ export default function BattlePage() {
             errorText={myError?.message ?? ''}
             onHover={async () => null}
             onMouseLine={() => {}}
+            insert={insert}
           />
           <div className="mt-3 flex items-center gap-3">
             <button data-testid="battle-run" onClick={compile} disabled={!playing || compiling} className="btn-neon px-5 py-2">
               Run Proof
             </button>
+            <button data-testid="battle-helper" onClick={() => setHelperOpen(true)} disabled={!playing} className="btn-paper px-4 py-2" title="Build a helper (def) with a form">
+              🧩 Helper
+            </button>
+            <HelperBuilder open={helperOpen} onClose={() => setHelperOpen(false)} onInsert={(text, where) => setInsert((i) => ({ id: (i?.id ?? 0) + 1, text, where }))} />
           </div>
           <p className="mt-4 min-h-6 font-mono text-sm font-bold" data-testid="battle-status">{status}</p>
         </section>
@@ -180,17 +190,17 @@ export default function BattlePage() {
           {/* the goal comes first, at the very top... */}
           <div className="flex flex-col items-center text-center" data-testid="target-panel">
             <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">Target</p>
-            {level.targetState && <BoardView board={level.targetState} size="md" testPrefix="tgt" />}
+            {level.targetState && <BoardView board={level.targetState} size="md" testPrefix="tgt" locked={level.locked} />}
           </div>
           {/* ...then you and your opponent next to each other, at the same size so the race is easy to read */}
           <div className="flex flex-row flex-wrap justify-center gap-4" data-testid="boards-row">
             <div className="flex flex-col items-center text-center" data-testid="my-panel">
               <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">You</p>
-              {myBoard && <BoardView board={myBoard} size="md" errorCells={myError?.cells} testPrefix="me" />}
+              {myBoard && <BoardView board={myBoard} size="md" errorCells={myError?.cells} locked={level.locked} testPrefix="me" />}
             </div>
             <div className="flex flex-col items-center text-center" data-testid="opponent-panel">
               <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">{battle.opponent} (live)</p>
-              {oppBoard && <BoardView board={oppBoard} size="md" testPrefix="opp" />}
+              {oppBoard && <BoardView board={oppBoard} size="md" locked={level.locked} testPrefix="opp" />}
               {/* w-0 + min-w-full: the text wraps to the width of the board instead of widening the column */}
               <p className="mt-2 w-0 min-w-full font-mono text-xs font-medium" data-testid="opponent-info">
                 {opp

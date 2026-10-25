@@ -104,8 +104,11 @@ const clone = (b: Board): Board => b.map((r) => r.map((c) => ({ ...c })));
 export const makeBoard = clone;
 const inBounds = (b: Board, x: number, y: number) => y >= 0 && y < b.length && x >= 0 && x < b[0].length;
 
+/** The level's locked cells as a lookup set ("x,y"). */
+export const lockedSet = (level: Pick<Level, "locked">): Set<string> => new Set((level.locked ?? []).map(([x, y]) => `${x},${y}`));
+
 /** Apply one op (mock of the Lean `Puzzle.apply`). Throws PuzzleError on an illegal move. */
-export function applyOp(board: Board, op: Op): Board {
+export function applyOp(board: Board, op: Op, locked?: Set<string>): Board {
   const n = op.args.map(Number);
   const b = clone(board);
   const check = (...pts: [number, number][]) => {
@@ -116,6 +119,9 @@ export function applyOp(board: Board, op: Op): Board {
         op.line,
         pts.filter(([x, y]) => inBounds(b, x, y)),
       );
+    const stuck = locked ? pts.filter(([x, y]) => locked.has(`${x},${y}`)) : [];
+    if (stuck.length)
+      throw new PuzzleError(`Illegal move: block (${stuck[0][0]}, ${stuck[0][1]}) is locked`, op.line, stuck);
   };
   if (op.name === "swap") {
     check([n[0], n[1]], [n[2], n[3]]);
@@ -138,9 +144,10 @@ export function applyOp(board: Board, op: Op): Board {
 export function runMock(level: Level, ops: Op[]): { steps: Step[]; error?: EvalError } {
   let board = makeBoard(level.initialState);
   const steps: Step[] = [];
+  const locked = lockedSet(level);
   for (const op of ops) {
     try {
-      board = applyOp(board, op);
+      board = applyOp(board, op, locked);
       steps.push({ line: op.line, board, op: { name: op.name, args: op.args } });
     } catch (e) {
       if (e instanceof PuzzleError) return { steps, error: { line: e.line, message: e.message, cells: e.cells } };
@@ -237,13 +244,14 @@ const describe = (o: Op) => {
 export function previewLine(level: Level, code: string, line: number) {
   const { ops } = parseProgram(code.split("\n").slice(0, line).join("\n"), Infinity);
   let board = makeBoard(level.initialState);
+  const locked = lockedSet(level);
   for (const op of ops) {
     if (op.line >= line) break;
-    board = applyOp(board, op);
+    board = applyOp(board, op, locked);
   }
   const here = ops.filter((o) => o.line === line);
   let after = board;
-  for (const op of here) after = applyOp(after, op);
+  for (const op of here) after = applyOp(after, op, locked);
   return {
     before: board,
     after,

@@ -31,6 +31,8 @@ interface Props {
    */
   ids?: number[][]
   errorCells?: [number, number][]
+  /** cells whose block is locked: drawn with a padlock, no command may touch them */
+  locked?: [number, number][]
   size?: BoardSize
   /** translucent preview of blocks that a hovered line would change */
   ghost?: { x: number; y: number; after: Block }[]
@@ -60,6 +62,7 @@ interface CellProps {
   y: number
   size: BoardSize
   isErr: boolean
+  isLocked: boolean
   ghost?: Block
   flashed: boolean
   flashColor?: Color
@@ -68,7 +71,7 @@ interface CellProps {
   glide: boolean
 }
 
-function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClick, testId, glide }: CellProps) {
+function CellView({ block, x, y, size, isErr, isLocked, ghost, flashed, flashColor, onClick, testId, glide }: CellProps) {
   const pulse = useAnimationControls()
   const prevColor = useRef(block.color)
   const prevRot = useRef(block.rot)
@@ -109,6 +112,7 @@ function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClic
       data-rot={block.rot ?? ''}
       data-flash={flashed ? 'true' : undefined}
       data-error={isErr ? 'true' : undefined}
+      data-locked={isLocked ? 'true' : undefined}
       data-sliding={sliding ? 'true' : undefined}
       onClick={onClick}
     >
@@ -123,6 +127,11 @@ function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClic
             } ${isErr ? 'block-error' : ''} ${flashed ? 'animate-pulse tile-flash' : ''}`}
           >
             {block.rot !== undefined && <Arrow rot={block.rot} size={size} />}
+            {isLocked && (
+              <span className={`tile-lock ${size === 'sm' ? 'tile-lock-sm' : ''}`} data-testid="lock" title="Locked: no command can touch this block" aria-label="locked">
+                🔒
+              </span>
+            )}
           </motion.div>
         </div>
         {splash > 0 && <div key={splash} data-testid="splash" className="paint-splash absolute inset-0" />}
@@ -147,7 +156,7 @@ function CellView({ block, x, y, size, isErr, ghost, flashed, flashColor, onClic
   )
 }
 
-export default function BoardView({ board, ids, errorCells = [], size = 'lg', ghost = [], flash, onCellClick, testPrefix, glide = true }: Props) {
+export default function BoardView({ board, ids, errorCells = [], locked = [], size = 'lg', ghost = [], flash, onCellClick, testPrefix, glide = true }: Props) {
   const cols = board[0]?.length ?? 0
   const prefix = testPrefix ?? size
   const cells = board
@@ -172,6 +181,7 @@ export default function BoardView({ board, ids, errorCells = [], size = 'lg', gh
           y={y}
           size={size}
           isErr={errorCells.some(([ex, ey]) => ex === x && ey === y)}
+          isLocked={locked.some(([lx, ly]) => lx === x && ly === y)}
           ghost={ghost.find((c) => c.x === x && c.y === y)?.after}
           flashed={!!flash?.cells.some(([fx, fy]) => fx === x && fy === y)}
           flashColor={flash?.color}

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import AchievementToasts from './AchievementToasts'
+import Achievements from './Achievements'
 import Battle from './Battle'
 import Builder from './Builder'
 import Daily from './Daily'
@@ -10,18 +12,19 @@ import Leaderboard from './Leaderboard'
 import Login from './Login'
 import { api, session } from './api'
 import { ThemeToggle } from './theme'
+import { hasSeenTutorial } from './tutorialState'
 import { LEVELS, customToLevel, decodeCustom } from './data/levels'
 import type { Level } from './data/levels'
 
 /**
- * Routes: `/` login, `/game`, `/daily`, `/battle`, `/builder`, `/leaderboard`. Every route except `/` requires a signed-in player,
+ * Routes: `/` login, `/game`, `/daily`, `/battle`, `/builder`, `/leaderboard`, `/achievements`. Every route except `/` requires a signed-in player,
  * and each page is its own route element, so the Game is unmounted (not hidden) while the builder or the
  * leaderboard is on screen.
  */
 export default function App() {
   const [player, setPlayer] = useState<string | null>(null)
   const [authReady, setAuthReady] = useState(false)
-  // the How to Play overlay: opened by the top-bar button and right after signing in, closed by Play! / Esc / the X
+  // the tutorial overlay: opened by the top-bar button and on a player's first sign-in, closed by Play! / Esc / the X
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false)
 
   // game progress kept above the Game route, because leaving the route unmounts the Game
@@ -55,7 +58,7 @@ export default function App() {
           <LoginRoute
             onLogin={(name) => {
               setPlayer(name)
-              setIsHowToPlayOpen(true) // the rules pop up right after signing in
+              if (!hasSeenTutorial(name)) setIsHowToPlayOpen(true) // the tutorial pops up on a player's first sign-in here
             }}
           />
         }
@@ -85,6 +88,7 @@ export default function App() {
           }
         />
         <Route path="/leaderboard" element={<Leaderboard player={player ?? ''} />} />
+        <Route path="/achievements" element={<Achievements />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -155,6 +159,15 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
           >
             <TrophyIcon />
           </NavLink>
+          <NavLink
+            to="/achievements"
+            aria-label="Achievements"
+            title="Achievements"
+            data-testid="nav-achievements"
+            className={({ isActive }) => `btn btn-icon text-base ${isActive ? 'btn-neon -translate-y-0.5' : 'btn-paper'}`}
+          >
+            🏅
+          </NavLink>
         </div>
         {/* center: the game modes */}
         <nav className="flex flex-wrap items-center justify-center gap-2.5">
@@ -175,6 +188,7 @@ function RequireAuth({ player, onSignOut, isHowToPlayOpen, setIsHowToPlayOpen }:
         </div>
       </header>
       <Outlet />
+      <AchievementToasts />
     </div>
   )
 }

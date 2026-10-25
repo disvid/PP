@@ -3,15 +3,18 @@ import type { Dispatch, SetStateAction } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import BoardView from './BoardView'
 import type { Flash } from './BoardView'
+import HelperBuilder from './HelperBuilder'
+import LevelMap from './LevelMap'
 import ProofEditor from './ProofEditor'
 import { api } from './api'
 import { LEVELS, customToLevel, decodeCustom, levelKey, theoremText, violations } from './data/levels'
 import type { Block, Board, Color, Level } from './data/levels'
 import { countLines } from './data/scoring'
+import { announceAchievements } from './achievementBus'
 import { celebrate } from './effects'
 import { isMuted, playOp, setMuted, unlockAudio } from './soundUtils'
 import type { SoundOp } from './soundUtils'
-import type { EvalError, EvalResponse } from './types'
+import type { EvalError, EvalResponse, Streak } from './types'
 
 const STEP_MS = 700
 const FLASH_MS = 3000
@@ -25,7 +28,7 @@ const fmt = (ms: number) => `${pad(Math.floor(ms / 60000))}:${pad(Math.floor(ms 
  * A stable id for every block at every step. Swaps move ids around, paints and rotations do not, so the board can
  * animate a swapped block gliding to its new cell instead of redrawing it.
  */
-function buildIds(initial: Board, ops: (SoundOp | null)[]): number[][][] {
+export function buildIds(initial: Board, ops: (SoundOp | null)[]): number[][][] {
   const w = initial[0].length
   let cur = initial.map((row, y) => row.map((_, x) => y * w + x))
   const out = [cur]
@@ -76,6 +79,8 @@ export interface SolveInfo {
   optimalLines: number
   elapsedMs: number | null
   total: number | null
+  /** daily only: the streak including this solve */
+  streak: Streak | null
 }
 
 interface Props {
@@ -114,6 +119,9 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
   const [score, setScore] = useState<EvalResponse['score']>(null)
   const [ghost, setGhost] = useState<Ghost | null>(null)
   const [flash, setFlash] = useState<Flash | null>(null)
+  const [helperOpen, setHelperOpen] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
+  const [insert, setInsert] = useState<{ id: number; text: string; where: 'top' | 'end' } | null>(null)
 
   // A level is locked until "Start Level" is clicked. The clock counts up only while `since` is set.
   const [started, setStarted] = useState(false)
@@ -277,7 +285,9 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
         optimalLines: level.optimalLines,
         elapsedMs: res.score?.elapsedMs ?? null,
         total: res.score?.total ?? null,
+        streak: res.streak ?? null,
       })
+      announceAchievements(res.achievements)
     }
   }
 
@@ -395,6 +405,11 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           {!fixedLevel && (
+            <button data-testid="map-button" className="btn-paper px-3 py-1" onClick={() => setMapOpen(true)} title="See every level and your progress">
+              🗺 Map
+            </button>
+          )}
+          {!fixedLevel && (
           <label className="flex items-center gap-2">
             Level
             <select data-testid="level-select" value={levelIdx} onChange={(e) => selectLevel(Number(e.target.value))} className="btn-paper px-2 py-1">
@@ -409,6 +424,8 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
           )}
         </div>
       </div>
+
+      <LevelMap open={mapOpen} onClose={() => setMapOpen(false)} current={levelIdx} solvedNow={solved} onPick={selectLevel} />
 
       <p className="mb-5 max-w-5xl border-l-8 border-magenta pl-4 text-base font-medium leading-snug">{level.description}</p>
 
@@ -430,6 +447,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
             errorText={error?.message ?? ''}
             onHover={onHover}
             onMouseLine={onMouseLine}
+            insert={insert}
           />
           <p className="mt-3 font-mono text-xs font-medium">swap(x1, y1, x2, y2) · paint(x, y, color) · rotate(x, y) · def name(a, b)</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -439,6 +457,10 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
             <button onClick={() => resetBoard(level)} disabled={!started} className="btn-paper px-4 py-2">
               Reset
             </button>
+            <button data-testid="helper-button" onClick={() => setHelperOpen(true)} disabled={!started || !!locked} className="btn-paper px-4 py-2" title="Build a helper (def) with a form">
+              🧩 Helper
+            </button>
+            <HelperBuilder open={helperOpen} onClose={() => setHelperOpen(false)} onInsert={(text, where) => setInsert((i) => ({ id: (i?.id ?? 0) + 1, text, where }))} />
             <button data-testid="hint-button" onClick={askHint} disabled={running || !started || won || !!locked} className="btn-magenta px-4 py-2" title="Costs 150 points and 30 seconds">
               Hint
             </button>
@@ -475,7 +497,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
               {ghost ? ' · ghost preview' : ''}
             </p>
             <div ref={boardRef} className={shake ? 'board-shake' : ''} data-testid="board">
-              <BoardView board={shown} ids={shownIds} errorCells={atEnd && !ghost ? error?.cells : undefined} ghost={ghost?.changed} flash={flash} />
+              <BoardView board={shown} ids={shownIds} errorCells={atEnd && !ghost ? error?.cells : undefined} locked={level.locked} ghost={ghost?.changed} flash={flash} />
             </div>
           </div>
           <div className="w-full max-w-xs" data-testid="scrubber">
@@ -503,7 +525,7 @@ export default function Game({ store, fixedLevel, onSolved, locked }: Props) {
           </div>
           <div className="text-center">
             <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">Target</p>
-            {level.targetState && <BoardView board={level.targetState} size="sm" />}
+            {level.targetState && <BoardView board={level.targetState} size="sm" locked={level.locked} />}
             {level.property && (
               <div className="max-w-md text-left" data-testid="theorem">
                 <pre className="whitespace-pre-wrap border-4 border-ink bg-abyss p-3 font-mono text-xs text-neon">{theoremText(level.property)}</pre>

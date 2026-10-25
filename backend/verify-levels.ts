@@ -4,6 +4,7 @@
 //    commands any solution needs (BFS) and a helper holds at most 4 commands, so a call line does at most 4
 //    and a helper costs a line of its own.
 // When the two meet, `optimalLines` is provably the shortest valid proof. Run with: npm run verify
+import { BUILTIN_LEVEL_COUNT } from "../frontend/src/data/achievements";
 import { COLORS, isSolved, LEVELS } from "../frontend/src/data/levels";
 import { applyOp, parseProgram, PuzzleError, runMock } from "./engine";
 import { findHint, shortestSolution } from "./hint";
@@ -15,9 +16,9 @@ const fail = (id: number, msg: string) => {
   console.log(`  FAIL level ${id}: ${msg}`);
 };
 
-if (LEVELS.length !== 67) {
+if (LEVELS.length !== BUILTIN_LEVEL_COUNT) {
   failures++;
-  console.log(`  FAIL: expected exactly 67 levels, found ${LEVELS.length}`);
+  console.log(`  FAIL: expected exactly ${BUILTIN_LEVEL_COUNT} levels, found ${LEVELS.length}`);
 }
 const seenTitles = new Set<string>();
 for (const lv of LEVELS) {

@@ -11,8 +11,10 @@ loader.config({ monaco })
 
 const FONT = "'Fira Code Variable', ui-monospace, Consolas, monospace"
 
-// The hover provider is global to the language, so it calls whichever editor registered last.
-let hoverHandler: ((line: number) => Promise<string | null>) | null = null
+// The hover provider is global to the language, so it calls whichever editor mounted last. A stack, so that an editor
+// opened on top of another (the tutorial over the game) hands hovering back when it closes.
+type HoverHandler = (line: number) => Promise<string | null>
+const hoverHandlers: HoverHandler[] = []
 let registered = false
 
 /** Language, theme and hover provider; runs once, before the first editor is created. */
@@ -74,7 +76,7 @@ function setup(m: typeof monaco) {
   // Hovering a line asks the backend what that line would do; the Game turns the answer into a ghost overlay.
   m.languages.registerHoverProvider('proof', {
     provideHover: async (_model, pos) => {
-      const text = await hoverHandler?.(pos.lineNumber)
+      const text = await hoverHandlers[hoverHandlers.length - 1]?.(pos.lineNumber)
       return text ? { contents: [{ value: text }] } : null
     },
   })
@@ -92,13 +94,16 @@ interface Props {
   errorText: string
   onHover: (line: number) => Promise<string | null>
   onMouseLine: (line: number | null) => void
+  /** text to add to the proof: a new `id` inserts it, at the top (helper definitions) or at the end (calls) */
+  insert?: { id: number; text: string; where: 'top' | 'end' } | null
 }
 
-export default function ProofEditor({ value, resetKey, readOnly, onChange, activeLine, errorLine, errorText, onHover, onMouseLine }: Props) {
+export default function ProofEditor({ value, resetKey, readOnly, onChange, activeLine, errorLine, errorText, onHover, onMouseLine, insert }: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const decorations = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
   const [ready, setReady] = useState(false)
   // latest callbacks, so the editor itself never has to be re-created
+  const myHover = useRef<HoverHandler | null>(null)
   const cb = useRef({ onChange, onHover, onMouseLine })
   cb.current = { onChange, onHover, onMouseLine }
 
@@ -134,7 +139,8 @@ export default function ProofEditor({ value, resetKey, readOnly, onChange, activ
   const handleMount = useCallback((editor: monaco.editor.IStandaloneCodeEditor) => {
     editorRef.current = editor
     decorations.current = editor.createDecorationsCollection()
-    hoverHandler = (line) => cb.current.onHover(line)
+    myHover.current = (line) => cb.current.onHover(line)
+    hoverHandlers.push(myHover.current)
     editor.onMouseMove((e) => cb.current.onMouseLine(e.target.position?.lineNumber ?? null))
     editor.onMouseLeave(() => cb.current.onMouseLine(null))
     // the variable font may arrive after Monaco measured its characters
@@ -142,9 +148,27 @@ export default function ProofEditor({ value, resetKey, readOnly, onChange, activ
     setReady(true)
   }, [])
 
+  // text pushed in from outside (the helper builder)
+  const lastInsert = useRef(0)
+  useEffect(() => {
+    const e = editorRef.current
+    const model = e?.getModel()
+    if (!ready || !e || !model || !insert || insert.id === lastInsert.current) return
+    lastInsert.current = insert.id
+    const text = model.getValue()
+    const range =
+      insert.where === 'top'
+        ? new monaco.Range(1, 1, 1, 1)
+        : new monaco.Range(model.getLineCount(), model.getLineMaxColumn(model.getLineCount()), model.getLineCount(), model.getLineMaxColumn(model.getLineCount()))
+    const lead = insert.where === 'end' && text !== '' && !text.endsWith('\n') ? '\n' : ''
+    e.executeEdits('helper-builder', [{ range, text: `${lead}${insert.text}\n`, forceMoveMarkers: true }])
+    e.focus()
+  }, [ready, insert])
+
   useEffect(
     () => () => {
-      hoverHandler = null
+      const i = hoverHandlers.indexOf(myHover.current as HoverHandler)
+      if (i >= 0) hoverHandlers.splice(i, 1)
     },
     [],
   )
