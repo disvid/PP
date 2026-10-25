@@ -161,7 +161,7 @@ export default function BattlePage() {
       )}
 
       <div className="grid items-start gap-9 md:grid-cols-[1.15fr_1fr]">
-        <section className="panel-heavy relative p-4 md:-ml-2">
+        <section className="panel-heavy relative p-4">
           <ProofEditor
             value={code}
             resetKey={`battle-${battle.seq}`}
@@ -186,7 +186,7 @@ export default function BattlePage() {
           <p className="mt-4 min-h-6 font-mono text-sm font-bold" data-testid="battle-status">{status}</p>
         </section>
 
-        <section className="panel shadow-magenta flex flex-col items-center gap-5 p-5 md:mt-10 md:rotate-[0.6deg]">
+        <section className="panel shadow-magenta flex flex-col items-center gap-5 p-5">
           {/* the goal comes first, at the very top... */}
           <div className="flex flex-col items-center text-center" data-testid="target-panel">
             <p className="mb-3 inline-block bg-abyss px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-widest text-neon">Target</p>

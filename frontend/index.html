@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Swappr</title>
     <script>
-      // apply the saved (or OS) theme before the first paint, so dark mode does not flash light
+      // apply the saved theme (light unless the player chose dark) before the first paint, so dark mode does not flash light
       try {
         var t = localStorage.getItem('pp_theme')
-        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (t === 'dark') {
           document.documentElement.classList.add('dark')
         }
       } catch (e) {}

@@ -114,7 +114,7 @@ Levels 24-67 come from `npm run generate:levels` (`backend/scripts/generate-leve
 
 ## Look and feel
 
-- **Dark mode**: the Light/Dark button in the top bar (and on the sign-in page) switches theme. The choice is saved in `localStorage` (`pp_theme`); first visit follows the OS setting. Colors are CSS variables in `frontend/src/index.css` that `.dark` on `<html>` overrides, so the neo-brutalist borders and hard shadows stay and only the palette flips.
+- **Dark mode**: the Light/Dark button in the top bar (and on the sign-in page) switches theme. The choice is saved in `localStorage` (`pp_theme`); first visit is light. Colors are CSS variables in `frontend/src/index.css` that `.dark` on `<html>` overrides, so the neo-brutalist borders and hard shadows stay and only the palette flips.
 - **Sound**: swap, rotate and paint each have their own voice (`frontend/src/soundUtils.ts`). At most 6 voices ring at once and repeats of one command are debounced, so fast scrubbing stays clean.
 - **Motion**: swaps slide, rotates spin the tile, paints pulse and splash. The line being run is highlighted in the editor with an arrow in the gutter. `prefers-reduced-motion` turns the animations off.
 - **Level names**: levels 24-67 get a unique "Adjective Noun" title from `backend/scripts/levelNames.ts`, via `npm run generate:levels`. `npm run verify` fails on duplicate titles.

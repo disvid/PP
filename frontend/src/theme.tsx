@@ -5,15 +5,15 @@ export type Theme = 'light' | 'dark'
 
 const KEY = 'pp_theme'
 
-/** The saved choice, else the OS preference. (index.html applies the same rule before React loads, to avoid a flash.) */
+/** The saved choice, else light. (index.html applies the same rule before React loads, to avoid a flash.) */
 function initialTheme(): Theme {
   try {
     const saved = localStorage.getItem(KEY)
     if (saved === 'light' || saved === 'dark') return saved
   } catch {
-    /* storage unavailable: fall through to the OS preference */
+    /* storage unavailable: fall through to the default */
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'light'
 }
 
 interface ThemeContextValue {
